@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Plus, User, X, Delete, Check, Clock, ShoppingBag, Minus } from "lucide-react";
+import { Search, Plus, User, X, Check, Clock, ShoppingBag, Minus } from "lucide-react";
 
 const extraItems = [
   { id: "1", name: "Ice Cream", price: 20, category: "desserts" },
@@ -41,13 +41,16 @@ const categoryBorders = {
 };
 
 const ExtrasPage = () => {
-  const [rollNumber, setRollNumber] = useState("");
+  const [rollSearch, setRollSearch] = useState("");
+  const [matchingStudents, setMatchingStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [selectedItems, setSelectedItems] = useState([]);
   const [items, setItems] = useState(extraItems);
   const [showAddItem, setShowAddItem] = useState(false);
   const [newItem, setNewItem] = useState({ name: "", price: "", category: "desserts" });
   const [showSuccess, setShowSuccess] = useState(false);
+  const [billedName, setBilledName] = useState("");
+  const [billedAmount, setBilledAmount] = useState(0);
   const [recentTransactions, setRecentTransactions] = useState([
     { student: "Arjun Sharma", roll: "2024CS001", items: ["Ice Cream", "Lassi"], total: 40, time: "2:30 PM" },
     { student: "Priya Patel", roll: "2024CS002", items: ["Gulab Jamun"], total: 25, time: "2:15 PM" },
@@ -55,19 +58,24 @@ const ExtrasPage = () => {
     { student: "Sneha Gupta", roll: "2024EE010", items: ["Rasmalai", "Dahi"], total: 40, time: "1:30 PM" },
   ]);
 
-  const handleNumberClick = (num) => {
-    if (rollNumber.length < 12) setRollNumber(prev => prev + num);
+  const handleSearchChange = (value) => {
+    setRollSearch(value);
+    if (value.length > 0) {
+      const matches = studentDB.filter(s =>
+        s.roll.toLowerCase().includes(value.toLowerCase()) ||
+        s.name.toLowerCase().includes(value.toLowerCase())
+      );
+      setMatchingStudents(matches);
+    } else {
+      setMatchingStudents([]);
+    }
   };
 
-  const handleBackspace = () => setRollNumber(prev => prev.slice(0, -1));
-  const handleClear = () => setRollNumber("");
-
-  const searchStudent = () => {
-    const found = studentDB.find(s => s.roll.toLowerCase() === rollNumber.toLowerCase());
-    if (found) {
-      setSelectedStudent(found);
-      setSelectedItems([]);
-    }
+  const pickStudent = (student) => {
+    setSelectedStudent(student);
+    setSelectedItems([]);
+    setRollSearch("");
+    setMatchingStudents([]);
   };
 
   const handleItemSelect = (item) => {
@@ -94,6 +102,8 @@ const ExtrasPage = () => {
   const totalAmount = selectedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
   const handleConfirm = () => {
+    setBilledName(selectedStudent.name);
+    setBilledAmount(totalAmount);
     setRecentTransactions(prev => [{
       student: selectedStudent.name,
       roll: selectedStudent.roll,
@@ -102,18 +112,16 @@ const ExtrasPage = () => {
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     }, ...prev.slice(0, 9)]);
     setShowSuccess(true);
-    setTimeout(() => {
-      setShowSuccess(false);
-      setSelectedStudent(null);
-      setSelectedItems([]);
-      setRollNumber("");
-    }, 2500);
+    setSelectedStudent(null);
+    setSelectedItems([]);
+    setRollSearch("");
+    setTimeout(() => setShowSuccess(false), 1000);
   };
 
   const handleCancel = () => {
     setSelectedStudent(null);
     setSelectedItems([]);
-    setRollNumber("");
+    setRollSearch("");
   };
 
   const addNewItem = () => {
@@ -150,8 +158,8 @@ const ExtrasPage = () => {
                 >
                   <Check className="w-10 h-10 text-primary-foreground" />
                 </motion.div>
-                <p className="text-2xl font-display font-bold text-foreground">₹{totalAmount} Billed</p>
-                <p className="text-muted-foreground mt-1">to {selectedStudent?.name}</p>
+                <p className="text-2xl font-display font-bold text-foreground">₹{billedAmount} Billed</p>
+                <p className="text-muted-foreground mt-1">to {billedName}</p>
               </div>
             </motion.div>
           )}
@@ -160,75 +168,61 @@ const ExtrasPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Panel */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Number Pad / Student Card */}
+            {/* Search / Student Card */}
             <AnimatePresence mode="wait">
               {!selectedStudent ? (
                 <motion.div
-                  key="numpad"
+                  key="search"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   className="bg-card rounded-2xl p-6 shadow-card border border-border"
                 >
-                  {/* Roll Number Input */}
-                  <div className="flex gap-2 mb-6">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <input
-                        type="text"
-                        value={rollNumber}
-                        readOnly
-                        placeholder="Enter Roll Number"
-                        className="w-full pl-10 pr-4 py-4 rounded-xl bg-muted border border-border text-foreground text-lg font-mono tracking-widest placeholder:text-muted-foreground placeholder:tracking-normal placeholder:font-sans focus:outline-none"
-                      />
-                    </div>
-                    <button onClick={handleClear} className="px-4 py-3 rounded-xl bg-muted border border-border text-muted-foreground font-medium text-sm hover:bg-destructive/10 hover:text-destructive transition-colors">
-                      Clear
-                    </button>
-                    <button onClick={searchStudent} className="px-6 py-3 rounded-xl bg-gradient-warm text-primary-foreground font-semibold text-sm shadow-warm hover:scale-[1.02] transition-transform">
-                      Search
-                    </button>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      type="text"
+                      value={rollSearch}
+                      onChange={e => handleSearchChange(e.target.value)}
+                      placeholder="Type roll number or name to search..."
+                      autoFocus
+                      className="w-full pl-10 pr-4 py-4 rounded-xl bg-muted border border-border text-foreground text-lg placeholder:text-muted-foreground placeholder:text-base focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
                   </div>
 
-                  {/* Number Pad */}
-                  <div className="grid grid-cols-3 gap-3 max-w-sm mx-auto">
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
-                      <motion.button
-                        key={num}
-                        whileTap={{ scale: 0.92 }}
-                        onClick={() => handleNumberClick(String(num))}
-                        className="h-[72px] rounded-2xl bg-muted border border-border text-foreground text-2xl font-semibold hover:bg-primary/10 hover:border-primary/30 active:bg-primary/20 transition-all"
+                  {/* Auto-suggest dropdown */}
+                  <AnimatePresence>
+                    {matchingStudents.length > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        className="mt-3 space-y-2"
                       >
-                        {num}
-                      </motion.button>
-                    ))}
-                    <motion.button
-                      whileTap={{ scale: 0.92 }}
-                      onClick={() => handleNumberClick("0")}
-                      className="h-[72px] rounded-2xl bg-muted border border-border text-foreground text-2xl font-semibold hover:bg-primary/10 hover:border-primary/30 transition-all col-start-2"
-                    >
-                      0
-                    </motion.button>
-                    <motion.button
-                      whileTap={{ scale: 0.92 }}
-                      onClick={handleBackspace}
-                      className="h-[72px] rounded-2xl bg-muted border border-border text-muted-foreground text-xl hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all col-start-3 flex items-center justify-center"
-                    >
-                      <Delete className="w-6 h-6" />
-                    </motion.button>
-                    {/* Letter shortcuts for common prefixes */}
-                    <div className="col-span-3 flex gap-2 mt-2">
-                      {["2024CS", "2024ME", "2024EE"].map(prefix => (
-                        <button
-                          key={prefix}
-                          onClick={() => setRollNumber(prefix)}
-                          className="flex-1 py-2 rounded-xl bg-muted/50 border border-border text-xs font-medium text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
-                        >
-                          {prefix}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                        {matchingStudents.map(student => (
+                          <motion.button
+                            key={student.id}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => pickStudent(student)}
+                            className="w-full flex items-center gap-4 p-4 rounded-xl bg-muted/50 border border-border hover:border-primary/30 hover:bg-primary/5 transition-all text-left"
+                          >
+                            <div className="w-12 h-12 rounded-xl bg-gradient-warm flex items-center justify-center shadow-warm">
+                              <User className="w-6 h-6 text-primary-foreground" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-semibold text-foreground">{student.name}</p>
+                              <p className="text-xs text-muted-foreground">{student.roll} • Floor {student.floor}</p>
+                            </div>
+                            <span className="text-xs text-primary font-medium">₹{student.monthExtras} this month</span>
+                          </motion.button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {rollSearch.length > 0 && matchingStudents.length === 0 && (
+                    <p className="text-sm text-muted-foreground mt-3 text-center">No students found</p>
+                  )}
                 </motion.div>
               ) : (
                 <motion.div
