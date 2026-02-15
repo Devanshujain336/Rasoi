@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   UtensilsCrossed, LayoutDashboard, Receipt, Vote, 
-  ScanLine, MessageSquare, Menu, X, CalendarCheck, CreditCard
+  ScanLine, MessageSquare, Menu, X, CalendarCheck, CreditCard, IndianRupee
 } from "lucide-react";
 
 const navItems = [
@@ -12,6 +12,7 @@ const navItems = [
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { path: "/extras", label: "Extras", icon: CreditCard },
   { path: "/rebate", label: "Rebate", icon: Receipt },
+  { path: "/billing", label: "Billing", icon: IndianRupee },
   { path: "/mhmc", label: "MHMC", icon: Vote },
   { path: "/nutrition", label: "AI Nutrition", icon: ScanLine },
   { path: "/forum", label: "Forum", icon: MessageSquare },

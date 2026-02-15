@@ -12,6 +12,7 @@ import RebatePage from "./pages/RebatePage";
 import MHMCPage from "./pages/MHMCPage";
 import NutritionPage from "./pages/NutritionPage";
 import ForumPage from "./pages/ForumPage";
+import BillingPage from "./pages/BillingPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/mhmc" element={<MHMCPage />} />
           <Route path="/nutrition" element={<NutritionPage />} />
           <Route path="/forum" element={<ForumPage />} />
+          <Route path="/billing" element={<BillingPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
