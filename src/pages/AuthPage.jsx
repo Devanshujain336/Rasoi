@@ -4,6 +4,22 @@ import { UtensilsCrossed, Mail, Lock, User, Eye, EyeOff, ArrowRight, AlertCircle
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
+// MUST be outside AuthPage — defining inside causes remount on every keystroke
+const InputField = ({ icon: Icon, type = "text", placeholder, value, onChange, right, required = true }) => (
+  <div className="relative">
+    <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+    <input
+      type={type}
+      placeholder={placeholder}
+      value={value}
+      onChange={onChange}
+      required={required}
+      className="w-full pl-10 pr-10 py-3 rounded-xl bg-muted border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+    />
+    {right && <div className="absolute right-3 top-1/2 -translate-y-1/2">{right}</div>}
+  </div>
+);
+
 const AuthPage = () => {
   const [mode, setMode] = useState("login"); // login | signup | forgot
   const [loading, setLoading] = useState(false);
@@ -49,28 +65,10 @@ const AuthPage = () => {
     else setSuccess("Password reset link sent! Check your email.");
   };
 
-  const InputField = ({ icon: Icon, type = "text", placeholder, value, onChange, right }) => (
-    <div className="relative">
-      <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-      <input
-        type={type}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        required
-        className="w-full pl-10 pr-10 py-3 rounded-xl bg-muted border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
-      />
-      {right && <div className="absolute right-3 top-1/2 -translate-y-1/2">{right}</div>}
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md"
-      >
+      <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
+
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="w-14 h-14 rounded-2xl bg-gradient-warm flex items-center justify-center mx-auto mb-3 shadow-warm">
