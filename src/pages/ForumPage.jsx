@@ -26,7 +26,7 @@ const timeAgo = (ts) => {
 
 // ─── New Post Modal ───────────────────────────────────────────────
 const NewPostModal = ({ onClose, onCreated }) => {
-  const { user } = useAuth();
+  const { user, hostel, isBlocked } = useAuth();
   const [form, setForm] = useState({ title: "", content: "", category: "general" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -35,8 +35,13 @@ const NewPostModal = ({ onClose, onCreated }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.title.trim() || !form.content.trim()) return;
+    if (isBlocked) { setError("You are blocked from posting."); return; }
+    if (!hostel) { setError("No hostel assigned to your account."); return; }
     setLoading(true); setError("");
-    const { error } = await supabase.from("forum_posts").insert({ title: form.title, content: form.content, category: form.category, author_id: user.id });
+    const { error } = await supabase.from("forum_posts").insert({
+      title: form.title, content: form.content, category: form.category,
+      author_id: user.id, hostel_id: hostel.id,
+    });
     setLoading(false);
     if (error) setError(error.message);
     else { onCreated(); onClose(); }
@@ -315,7 +320,7 @@ const PostDetail = ({ postId, onBack }) => {
 
 // ─── Main Forum Page ──────────────────────────────────────────────
 const ForumPage = () => {
-  const { user, isMHMC } = useAuth();
+  const { user, isMHMC, hostel, isBlocked } = useAuth();
   const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [profiles, setProfiles] = useState({});
@@ -363,13 +368,20 @@ const ForumPage = () => {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between mb-8">
           <div>
             <h1 className="font-display text-4xl font-bold text-foreground">Community Forum</h1>
-            <p className="text-muted-foreground mt-1">Discuss, suggest, and improve mess services together</p>
+            <p className="text-muted-foreground mt-1">
+              {hostel ? `${hostel.name} — ` : ""}Discuss, suggest, and improve mess services together
+            </p>
+            {isBlocked && (
+              <p className="text-destructive text-xs mt-1 font-medium">⚠️ You are blocked from posting in this hostel.</p>
+            )}
           </div>
-          <button onClick={() => setShowNewPost(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-warm text-primary-foreground font-semibold text-sm shadow-warm hover:shadow-lg hover:scale-[1.02] transition-all">
-            <Plus className="w-4 h-4" />
-            New Post
-          </button>
+          {!isBlocked && (
+            <button onClick={() => setShowNewPost(true)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-warm text-primary-foreground font-semibold text-sm shadow-warm hover:shadow-lg hover:scale-[1.02] transition-all">
+              <Plus className="w-4 h-4" />
+              New Post
+            </button>
+          )}
         </motion.div>
 
         {/* Filters */}

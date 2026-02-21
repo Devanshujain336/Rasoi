@@ -16,6 +16,7 @@ import ForumPage from "./pages/ForumPage";
 import BillingPage from "./pages/BillingPage";
 import AuthPage from "./pages/AuthPage";
 import ProfilePage from "./pages/ProfilePage";
+import AdminPage from "./pages/AdminPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/mhmc" element={<MHMCPage />} />
             <Route path="/nutrition" element={<NutritionPage />} />
             <Route path="/forum" element={<ForumPage />} />
+            <Route path="/admin" element={<AdminPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
