@@ -7,6 +7,7 @@ import {
   User, LogOut, Settings, ChevronDown, Shield
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import NotificationBell from "@/components/NotificationBell";
 
 const navItems = [
   { path: "/", label: "Home", icon: UtensilsCrossed },
@@ -25,7 +26,7 @@ const Navbar = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, profile, role, signOut } = useAuth();
+  const { user, profile, role, hostel, signOut } = useAuth();
 
   const handleSignOut = async () => {
     setProfileOpen(false);
@@ -76,6 +77,7 @@ const Navbar = () => {
 
           {/* Profile / Auth */}
           <div className="hidden lg:flex items-center gap-2">
+            {user && <NotificationBell />}
             {user ? (
               <div className="relative">
                 <button
@@ -87,7 +89,7 @@ const Navbar = () => {
                   </div>
                   <div className="text-left">
                     <p className="text-xs font-semibold text-foreground leading-none">{profile?.full_name || "Student"}</p>
-                    <p className="text-[10px] text-muted-foreground capitalize">{role === "mhmc" ? "MHMC Member" : role}</p>
+                    <p className="text-[10px] text-muted-foreground capitalize">{hostel?.name ? `${hostel.name} • ` : ""}{role === "mhmc" ? "MHMC Member" : role}</p>
                   </div>
                   <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${profileOpen ? "rotate-180" : ""}`} />
                 </button>

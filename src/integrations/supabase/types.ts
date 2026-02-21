@@ -14,6 +14,73 @@ export type Database = {
   }
   public: {
     Tables: {
+      allowed_emails: {
+        Row: {
+          created_at: string
+          email: string
+          hostel_id: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          hostel_id: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          hostel_id?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "allowed_emails_hostel_id_fkey"
+            columns: ["hostel_id"]
+            isOneToOne: false
+            referencedRelation: "hostels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blocked_users: {
+        Row: {
+          blocked_by: string
+          created_at: string
+          hostel_id: string
+          id: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          blocked_by: string
+          created_at?: string
+          hostel_id: string
+          id?: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          blocked_by?: string
+          created_at?: string
+          hostel_id?: string
+          id?: string
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocked_users_hostel_id_fkey"
+            columns: ["hostel_id"]
+            isOneToOne: false
+            referencedRelation: "hostels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forum_comments: {
         Row: {
           author_id: string
@@ -68,6 +135,7 @@ export type Database = {
           category: string
           content: string
           created_at: string
+          hostel_id: string | null
           id: string
           is_locked: boolean
           is_pinned: boolean
@@ -80,6 +148,7 @@ export type Database = {
           category?: string
           content: string
           created_at?: string
+          hostel_id?: string | null
           id?: string
           is_locked?: boolean
           is_pinned?: boolean
@@ -92,6 +161,7 @@ export type Database = {
           category?: string
           content?: string
           created_at?: string
+          hostel_id?: string | null
           id?: string
           is_locked?: boolean
           is_pinned?: boolean
@@ -99,13 +169,107 @@ export type Database = {
           updated_at?: string
           views_count?: number
         }
+        Relationships: [
+          {
+            foreignKeyName: "forum_posts_hostel_id_fkey"
+            columns: ["hostel_id"]
+            isOneToOne: false
+            referencedRelation: "hostels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hostels: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
         Relationships: []
+      }
+      notification_reads: {
+        Row: {
+          id: string
+          notification_id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          notification_id: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          notification_id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_reads_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          hostel_id: string
+          id: string
+          message: string
+          sent_by: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          hostel_id: string
+          id?: string
+          message: string
+          sent_by: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          hostel_id?: string
+          id?: string
+          message?: string
+          sent_by?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_hostel_id_fkey"
+            columns: ["hostel_id"]
+            isOneToOne: false
+            referencedRelation: "hostels"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
           avatar_url: string | null
           created_at: string
           full_name: string
+          hostel_id: string | null
           id: string
           phone: string | null
           roll_number: string | null
@@ -117,6 +281,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           full_name?: string
+          hostel_id?: string | null
           id?: string
           phone?: string | null
           roll_number?: string | null
@@ -128,6 +293,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           full_name?: string
+          hostel_id?: string | null
           id?: string
           phone?: string | null
           roll_number?: string | null
@@ -135,7 +301,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_hostel_id_fkey"
+            columns: ["hostel_id"]
+            isOneToOne: false
+            referencedRelation: "hostels"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -160,11 +334,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_user_hostel: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_blocked: {
+        Args: { _hostel_id: string; _user_id: string }
         Returns: boolean
       }
     }
