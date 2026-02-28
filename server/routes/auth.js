@@ -4,8 +4,21 @@ import User from "../models/User.js";
 import Profile from "../models/Profile.js";
 import Hostel from "../models/Hostel.js";
 import { protect } from "../middleware/auth.js";
+import { z } from "zod";
 
 const router = express.Router();
+
+const signupSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(6),
+    full_name: z.string().min(2),
+    roll_number: z.string().optional()
+});
+
+const loginSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(1)
+});
 
 // POST /api/auth/validate-email
 router.post("/validate-email", async (req, res) => {
@@ -29,17 +42,21 @@ router.post("/validate-email", async (req, res) => {
 // POST /api/auth/signup
 router.post("/signup", async (req, res) => {
     try {
-        const { email, password, full_name, roll_number } = req.body;
-        if (!email || !password) return res.status(400).json({ error: "Email and password are required." });
-        if (password.length < 6) return res.status(400).json({ error: "Password must be at least 6 characters." });
+        const validation = signupSchema.safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({ error: validation.error.errors[0].message });
+        }
 
-        const allowedEntry = await AllowedEmail.findOne({ email: email.toLowerCase().trim() }).populate("hostel_id");
+        const { email, password, full_name, roll_number } = validation.data;
+        const normalizedEmail = email.toLowerCase().trim();
+
+        const allowedEntry = await AllowedEmail.findOne({ email: normalizedEmail }).populate("hostel_id");
         if (!allowedEntry) return res.status(403).json({ error: "Email not on approved list." });
 
-        const existing = await User.findOne({ email: email.toLowerCase().trim() });
+        const existing = await User.findOne({ email: normalizedEmail });
         if (existing) return res.status(409).json({ error: "An account with this email already exists." });
 
-        const user = await User.create({ email, password, full_name: full_name || "" });
+        const user = await User.create({ email: normalizedEmail, password, full_name });
 
         await Profile.create({
             user_id: user._id,
@@ -60,9 +77,12 @@ router.post("/signup", async (req, res) => {
 // POST /api/auth/login
 router.post("/login", async (req, res) => {
     try {
-        const { email, password } = req.body;
-        if (!email || !password) return res.status(400).json({ error: "Email and password are required." });
+        const validation = loginSchema.safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({ error: validation.error.errors[0].message });
+        }
 
+        const { email, password } = validation.data;
         const user = await User.findOne({ email: email.toLowerCase().trim() });
         if (!user || !(await user.matchPassword(password))) {
             return res.status(401).json({ error: "Invalid email or password." });

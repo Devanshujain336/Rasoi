@@ -4,8 +4,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   UtensilsCrossed, Vote, History, BarChart3, ChevronLeft, ChevronRight,
   Edit3, X, Plus, Trash2, Save, ThumbsUp, Trophy, Clock, CheckCircle,
-  Filter, ArrowDownWideNarrow, PartyPopper, AlertCircle, Eye
+  Filter, ArrowDownWideNarrow, PartyPopper, AlertCircle, Eye, Star
 } from "lucide-react";
+import api from "@/lib/api";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const MEALS = ["Breakfast", "Lunch", "Dinner"];
@@ -45,12 +46,17 @@ const MHMCPage = () => {
   const [pollDetail, setPollDetail] = useState(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({});
 
   const fetchData = async () => {
     try {
-      const res = await axios.get("http://localhost:3001/api/menu", { withCredentials: true });
-      if (res.data.menu) setMenu(res.data.menu);
-      if (res.data.polls) setPolls(res.data.polls);
+      const res = await api.getMenu();
+      if (res.menu) setMenu(res.menu);
+      if (res.polls) setPolls(res.polls);
+
+      const month = new Date().toISOString().slice(0, 7);
+      const statsRes = await api.getRatingStats(month);
+      setStats(statsRes);
     } catch (error) {
       console.error("Error fetching menu data", error);
     } finally {
@@ -109,7 +115,7 @@ const MHMCPage = () => {
         <div className="p-6 max-w-6xl mx-auto">
           <AnimatePresence mode="wait">
             {tab === "editor" && (
-              <MenuEditor key="editor" menu={menu} setMenu={setMenu} editModal={editModal} setEditModal={setEditModal} polls={activePolls} />
+              <MenuEditor key="editor" menu={menu} setMenu={setMenu} editModal={editModal} setEditModal={setEditModal} polls={activePolls} stats={stats} />
             )}
             {tab === "polls" && (
               <ActivePollsTab
@@ -125,7 +131,7 @@ const MHMCPage = () => {
               <PollHistoryTab key="history" polls={polls.filter(p => p.status !== "active")} />
             )}
             {tab === "analytics" && (
-              <AnalyticsTab key="analytics" polls={polls} menu={menu} />
+              <AnalyticsTab key="analytics" polls={polls} menu={menu} stats={stats} />
             )}
           </AnimatePresence>
         </div>
@@ -167,7 +173,7 @@ const MHMCPage = () => {
 };
 
 /* ===== MENU EDITOR ===== */
-const MenuEditor = ({ menu, setMenu, editModal, setEditModal, polls }) => {
+const MenuEditor = ({ menu, setMenu, editModal, setEditModal, polls, stats }) => {
   const [editItems, setEditItems] = useState([]);
 
   const openEdit = (day, meal) => {
@@ -506,16 +512,18 @@ const PollHistoryTab = ({ polls }) => {
 };
 
 /* ===== ANALYTICS ===== */
-const AnalyticsTab = ({ polls, menu }) => {
+const AnalyticsTab = ({ polls, menu, stats }) => {
   const totalPolls = polls.length;
   const approved = polls.filter(p => p.status === "approved").length;
   const rejected = polls.filter(p => p.status === "rejected").length;
   const expired = polls.filter(p => p.status === "expired").length;
   const active = polls.filter(p => p.status === "active").length;
   const avgVotes = totalPolls > 0 ? Math.round(polls.reduce((s, p) => s + p.votes, 0) / totalPolls) : 0;
-  const totalMenuItems = DAYS.reduce((s, d) => s + MEALS.reduce((s2, m) => s2 + menu[d][m].length, 0), 0);
+  const totalMenuItems = (menu && DAYS && MEALS)
+    ? DAYS.reduce((s, d) => s + (menu[d] ? MEALS.reduce((s2, m) => s2 + (menu[d][m] ? (Array.isArray(menu[d][m]) ? menu[d][m].length : 1) : 0), 0) : 0), 0)
+    : 0;
 
-  const stats = [
+  const stats_summary = [
     { label: "Total Polls", value: totalPolls, color: "bg-primary/15 text-primary" },
     { label: "Active", value: active, color: "bg-secondary/15 text-secondary" },
     { label: "Approved", value: approved, color: "bg-gradient-warm text-primary-foreground" },
@@ -539,7 +547,7 @@ const AnalyticsTab = ({ polls, menu }) => {
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
-        {stats.map(s => (
+        {stats_summary.map(s => (
           <div key={s.label} className={`rounded-2xl p-4 text-center ${s.color}`}>
             <p className="text-2xl font-bold font-display">{s.value}</p>
             <p className="text-xs font-medium mt-1">{s.label}</p>
@@ -570,27 +578,48 @@ const AnalyticsTab = ({ polls, menu }) => {
             })}
           </div>
         </div>
+      </div>
 
-        {/* Polls by Day */}
-        <div className="bg-card rounded-2xl p-5 border border-border">
-          <h3 className="font-display text-lg font-semibold text-foreground mb-4">Polls by Day</h3>
-          <div className="space-y-3">
-            {DAYS.map(d => {
-              const count = dayDist[d] || 0;
-              const max = Math.max(...Object.values(dayDist), 1);
-              return (
-                <div key={d}>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-foreground font-medium">{d}</span>
-                    <span className="text-muted-foreground">{count}</span>
-                  </div>
-                  <div className="h-2.5 rounded-full bg-muted overflow-hidden">
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${(count / max) * 100}%` }} transition={{ duration: 1 }} className="h-full rounded-full bg-gradient-emerald" />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+      {/* Satisfaction Rate by Day */}
+      <div className="mt-6 bg-card rounded-2xl p-5 border border-border">
+        <h3 className="font-display text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+          <Star className="w-5 h-5 text-accent" /> Monthly Satisfaction Rate
+        </h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-muted-foreground border-b border-border">
+                <th className="text-left font-semibold py-2">Date</th>
+                <th className="text-center font-semibold py-2">Breakfast</th>
+                <th className="text-center font-semibold py-2">Lunch</th>
+                <th className="text-center font-semibold py-2">Dinner</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.keys(stats).sort((a, b) => b.localeCompare(a)).map(date => (
+                <tr key={date} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                  <td className="py-2.5 font-medium">{date}</td>
+                  {MEALS.map(meal => {
+                    const rate = stats[date][meal];
+                    return (
+                      <td key={meal} className="text-center py-2.5">
+                        {rate !== undefined ? (
+                          <span className={`font-bold ${rate >= 70 ? "text-emerald" : rate >= 40 ? "text-orange-500" : "text-destructive"}`}>
+                            {rate}%
+                          </span>
+                        ) : "-"}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+              {Object.keys(stats).length === 0 && (
+                <tr>
+                  <td colSpan="4" className="text-center py-8 text-muted-foreground">No rating data yet for this month.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -612,7 +641,7 @@ const AnalyticsTab = ({ polls, menu }) => {
           </div>
         </div>
       </div>
-    </motion.div>
+    </motion.div >
   );
 };
 
