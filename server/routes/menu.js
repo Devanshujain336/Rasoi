@@ -101,6 +101,12 @@ router.put("/polls/:id/status", authMiddleware, async (req, res) => {
         }
 
         const { status } = req.body;
+
+        if (status === "rejected") {
+            await Poll.findByIdAndDelete(req.params.id);
+            return res.json({ message: "Poll rejected and removed successfully" });
+        }
+
         const poll = await Poll.findById(req.params.id);
         if (!poll) return res.status(404).json({ error: "Poll not found" });
 
