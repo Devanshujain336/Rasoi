@@ -10,6 +10,7 @@ import adminRoutes from "./routes/admin.js";
 import forumRoutes from "./routes/forum.js";
 import notificationRoutes from "./routes/notifications.js";
 import billingRoutes from "./routes/billing.js";
+import menuRoutes from "./routes/menu.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -25,6 +26,10 @@ const allowedOrigins = [
     "http://127.0.0.1:5174",
     "http://localhost:8080",
     "http://127.0.0.1:8080",
+    "http://localhost:8081",
+    "http://127.0.0.1:8081",
+    "http://localhost:8082",
+    "http://127.0.0.1:8082",
     "http://localhost:5175",
     "http://127.0.0.1:5175"
 ].filter(Boolean);
@@ -44,6 +49,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/forum", forumRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/billing", billingRoutes);
+app.use("/api/menu", menuRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => res.json({ status: "ok", time: new Date().toISOString() }));

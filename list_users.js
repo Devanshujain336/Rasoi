@@ -1,20 +1,29 @@
+
+import mongoose from "mongoose";
 import dotenv from "dotenv";
 dotenv.config();
-import mongoose from "mongoose";
+
 import User from "./server/models/User.js";
 import Profile from "./server/models/Profile.js";
 
-async function listAll() {
+const listUsers = async () => {
     try {
         await mongoose.connect(process.env.MONGO_URI);
-        const users = await User.find({});
-        for (const u of users) {
-            const p = await Profile.findOne({ user_id: u._id });
-            console.log(JSON.stringify({ email: u.email, role: p?.role || "NONE", profile_id: p?._id }));
+        console.log("Connected to MongoDB");
+
+        const users = await User.find();
+        console.log(`Found ${users.length} users`);
+
+        for (const user of users) {
+            const profile = await Profile.findOne({ user_id: user._id }).populate("hostel_id");
+            console.log(`- ${user.email} -> Role: ${profile?.role || "none"}, Hostel: ${profile?.hostel_id?.name || "none"}`);
         }
+
         process.exit(0);
     } catch (err) {
+        console.error(err);
         process.exit(1);
     }
-}
-listAll();
+};
+
+listUsers();

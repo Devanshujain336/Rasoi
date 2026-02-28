@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   UtensilsCrossed, Vote, History, BarChart3, ChevronLeft, ChevronRight,
@@ -43,6 +44,27 @@ const MHMCPage = () => {
   const [editModal, setEditModal] = useState(null);
   const [pollDetail, setPollDetail] = useState(null);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = async () => {
+    try {
+      const res = await axios.get("http://localhost:3001/api/menu", { withCredentials: true });
+      if (res.data.menu) setMenu(res.data.menu);
+      if (res.data.polls) setPolls(res.data.polls);
+    } catch (error) {
+      console.error("Error fetching menu data", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return <div className="min-h-screen pt-16 flex justify-center items-center">Loading...</div>;
+  }
 
   const activePolls = polls.filter(p => p.status === "active");
   const hotCount = activePolls.filter(p => (p.votes / p.totalStudents) * 100 >= 70).length;
@@ -66,11 +88,10 @@ const MHMCPage = () => {
               <button
                 key={n.key}
                 onClick={() => setTab(n.key)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                  active
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-warm"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                }`}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${active
+                  ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-warm"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  }`}
               >
                 <n.icon className="w-5 h-5 shrink-0" />
                 {!collapsed && <span>{n.label}</span>}
@@ -91,9 +112,16 @@ const MHMCPage = () => {
               <MenuEditor key="editor" menu={menu} setMenu={setMenu} editModal={editModal} setEditModal={setEditModal} polls={activePolls} />
             )}
             {tab === "polls" && (
-              <ActivePollsTab key="polls" polls={activePolls} setPolls={setPolls} pollDetail={pollDetail} setPollDetail={setPollDetail} showConfetti={showConfetti} setShowConfetti={setShowConfetti} />
-            )}
-            {tab === "history" && (
+              <ActivePollsTab
+                key="active-polls"
+                polls={polls}
+                setPolls={setPolls}
+                pollDetail={pollDetail}
+                setPollDetail={setPollDetail}
+                setShowConfetti={setShowConfetti}
+                onUpdate={fetchData}
+              />
+            )}{tab === "history" && (
               <PollHistoryTab key="history" polls={polls.filter(p => p.status !== "active")} />
             )}
             {tab === "analytics" && (
@@ -147,13 +175,19 @@ const MenuEditor = ({ menu, setMenu, editModal, setEditModal, polls }) => {
     setEditModal({ day, meal });
   };
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (!editModal) return;
-    setMenu(prev => ({
-      ...prev,
-      [editModal.day]: { ...prev[editModal.day], [editModal.meal]: editItems.filter(i => i.trim()) },
-    }));
-    setEditModal(null);
+    const updatedMenu = {
+      ...menu,
+      [editModal.day]: { ...menu[editModal.day], [editModal.meal]: editItems.filter(i => i.trim()) },
+    };
+    try {
+      await axios.put("http://localhost:3001/api/menu", { data: updatedMenu }, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
+      setMenu(updatedMenu);
+      setEditModal(null);
+    } catch (error) {
+      console.error("Failed to update menu", error);
+    }
   };
 
   const hasPoll = (day, meal) => polls.some(p => p.day === day && p.meal === meal);
@@ -249,7 +283,7 @@ const MenuEditor = ({ menu, setMenu, editModal, setEditModal, polls }) => {
 };
 
 /* ===== ACTIVE POLLS ===== */
-const ActivePollsTab = ({ polls, setPolls, pollDetail, setPollDetail, showConfetti, setShowConfetti }) => {
+const ActivePollsTab = ({ polls, setPolls, pollDetail, setPollDetail, setShowConfetti, onUpdate }) => {
   const [filter, setFilter] = useState("all");
   const [sortBy, setSortBy] = useState("percent");
 
@@ -259,16 +293,27 @@ const ActivePollsTab = ({ polls, setPolls, pollDetail, setPollDetail, showConfet
     return b.daysLeft - a.daysLeft;
   });
 
-  const handleApprove = (pollId) => {
-    setPolls(prev => prev.map(p => p.id === pollId ? { ...p, status: "approved", approvedBy: "Admin", implementationMonth: "March 2026" } : p));
-    setShowConfetti(true);
-    setTimeout(() => setShowConfetti(false), 2500);
-    setPollDetail(null);
+  const handleApprove = async (pollId) => {
+    try {
+      await axios.put(`http://localhost:3001/api/menu/polls/${pollId}/status`, { status: "approved" }, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 3000);
+      setPollDetail(null);
+      // Wait a tiny bit for the confetti to be visible
+      setTimeout(onUpdate, 500);
+    } catch (error) {
+      console.error("Failed to approve", error);
+    }
   };
 
-  const handleReject = (pollId) => {
-    setPolls(prev => prev.map(p => p.id === pollId ? { ...p, status: "rejected" } : p));
-    setPollDetail(null);
+  const handleReject = async (pollId) => {
+    try {
+      await axios.put(`http://localhost:3001/api/menu/polls/${pollId}/status`, { status: "rejected" }, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
+      setPollDetail(null);
+      onUpdate();
+    } catch (error) {
+      console.error("Failed to reject", error);
+    }
   };
 
   return (

@@ -4,6 +4,24 @@ import { User, Mail, Phone, Hash, Home, Save, AlertCircle, CheckCircle2, Shield 
 import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
 
+// ⚠️ Must be defined OUTSIDE the parent component — defining inside causes
+// React to remount on every render, losing input focus after each keystroke.
+const InputRow = ({ icon: Icon, label, value, onChange, placeholder, readOnly = false }) => (
+  <div>
+    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">{label}</label>
+    <div className="relative">
+      <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+      <input
+        type="text" value={value} onChange={onChange} placeholder={placeholder} readOnly={readOnly}
+        className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm transition-all focus:outline-none ${readOnly
+            ? "bg-muted text-muted-foreground border-border cursor-not-allowed"
+            : "bg-background border-border text-foreground focus:ring-2 focus:ring-primary/30"
+          }`}
+      />
+    </div>
+  </div>
+);
+
 const ProfilePage = () => {
   const { user, profile, role, refetchProfile } = useAuth();
   const [form, setForm] = useState({
@@ -33,22 +51,6 @@ const ProfilePage = () => {
   };
 
   const roleColors = { student: "bg-primary/10 text-primary", mhmc: "bg-secondary/10 text-secondary", admin: "bg-destructive/10 text-destructive" };
-
-  const InputRow = ({ icon: Icon, label, value, onChange, placeholder, readOnly = false }) => (
-    <div>
-      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">{label}</label>
-      <div className="relative">
-        <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <input
-          type="text" value={value} onChange={onChange} placeholder={placeholder} readOnly={readOnly}
-          className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm transition-all focus:outline-none ${readOnly
-              ? "bg-muted text-muted-foreground border-border cursor-not-allowed"
-              : "bg-background border-border text-foreground focus:ring-2 focus:ring-primary/30"
-            }`}
-        />
-      </div>
-    </div>
-  );
 
   return (
     <div className="min-h-screen pt-20 pb-12 bg-background">
