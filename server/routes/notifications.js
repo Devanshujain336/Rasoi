@@ -26,9 +26,17 @@ router.get("/", protect, async (req, res) => {
 // POST /api/notifications  (broadcast)
 router.post("/", protect, async (req, res) => {
     try {
+        console.log("📢 Broadcast request received from user:", req.user._id);
         const myProfile = await Profile.findOne({ user_id: req.user._id });
-        if (!myProfile || !["mhmc", "admin"].includes(myProfile.role)) {
-            return res.status(403).json({ error: "Only MHMC/admin can send notifications." });
+        if (!myProfile) {
+            console.warn("⚠️ No profile found for user:", req.user._id);
+            return res.status(403).json({ error: "Only MHMC/admin can send notifications. Profile missing." });
+        }
+
+        console.log("👤 User role:", myProfile.role, "Hostel:", myProfile.hostel_id);
+
+        if (!["mhmc", "admin"].includes(myProfile.role)) {
+            return res.status(403).json({ error: `Only MHMC/admin can send notifications. Your role: ${myProfile.role}` });
         }
         if (!myProfile.hostel_id) return res.status(400).json({ error: "No hostel assigned." });
 
@@ -41,8 +49,10 @@ router.post("/", protect, async (req, res) => {
             message: message.trim(),
             sent_by: req.user._id,
         });
+        console.log("✅ Notification created:", notification._id);
         res.status(201).json(notification);
     } catch (err) {
+        console.error("❌ Broadcast error:", err);
         res.status(500).json({ error: err.message });
     }
 });

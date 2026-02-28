@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import VideoBackground from "@/components/menu/VideoBackground";
 import MenuCard from "@/components/menu/MenuCard";
 import ActivePolls from "@/components/menu/ActivePolls";
+import axios from "axios";
+import { useAuth } from "@/contexts/AuthContext";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const MEALS = ["Breakfast", "Lunch", "Dinner"];
@@ -24,39 +26,62 @@ const initialPolls = [
   { id: 4, suggestion: "South Indian Special on Saturdays", day: "Saturday", meal: "Lunch", votes: 120, totalStudents: 250, by: "Deepa M.", daysLeft: 14, votedBy: [] },
 ];
 
-const CURRENT_USER = "current_user";
+
 
 const MenuPage = () => {
+  const [menu, setMenu] = useState(sampleMenu);
   const [polls, setPolls] = useState(initialPolls);
+  const [loading, setLoading] = useState(true);
   const [suggestionsLeft, setSuggestionsLeft] = useState(2);
+  const { user } = useAuth();
+  const currentUserId = user?.id || "current_user";
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await axios.get("http://localhost:3001/api/menu", { withCredentials: true });
+        if (res.data.menu) {
+          const formattedMenu = {};
+          for (const d in res.data.menu) {
+            formattedMenu[d] = {};
+            for (const m in res.data.menu[d]) {
+              formattedMenu[d][m] = Array.isArray(res.data.menu[d][m])
+                ? res.data.menu[d][m].join(", ")
+                : res.data.menu[d][m];
+            }
+          }
+          setMenu(formattedMenu);
+        }
+        if (res.data.polls) setPolls(res.data.polls.filter(p => p.status === "active"));
+      } catch (error) {
+        console.error("Error fetching menu data", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const getPollForSlot = (day, meal) => polls.find(p => p.day === day && p.meal === meal);
 
-  const handleCreatePoll = (day, meal, suggestion) => {
+  const handleCreatePoll = async (day, meal, suggestion) => {
     if (suggestionsLeft <= 0) return;
-    const newPoll = {
-      id: Date.now(),
-      suggestion,
-      day,
-      meal,
-      votes: 1,
-      totalStudents: 250,
-      by: "You",
-      daysLeft: 30,
-      votedBy: [CURRENT_USER],
-    };
-    setPolls(prev => [newPoll, ...prev]);
-    setSuggestionsLeft(prev => prev - 1);
+    try {
+      const res = await axios.post("http://localhost:3001/api/menu/polls", { day, meal, suggestion }, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
+      setPolls(prev => [res.data, ...prev]);
+      setSuggestionsLeft(prev => prev - 1);
+    } catch (error) {
+      console.error("Failed to suggest poll", error);
+    }
   };
 
-  const handleVote = (pollId) => {
-    setPolls(prev =>
-      prev.map(p =>
-        p.id === pollId && !p.votedBy.includes(CURRENT_USER)
-          ? { ...p, votes: p.votes + 1, votedBy: [...p.votedBy, CURRENT_USER] }
-          : p
-      )
-    );
+  const handleVote = async (pollId) => {
+    try {
+      const res = await axios.post(`http://localhost:3001/api/menu/polls/${pollId}/vote`, {}, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
+      setPolls(prev => prev.map(p => p.id === pollId ? res.data : p));
+    } catch (error) {
+      console.error("Failed to vote", error);
+    }
   };
 
   return (
@@ -109,12 +134,12 @@ const MenuPage = () => {
                       key={`${day}-${meal}`}
                       day={day}
                       meal={meal}
-                      items={sampleMenu[day][meal]}
+                      items={menu[day]?.[meal] || sampleMenu[day][meal]}
                       poll={getPollForSlot(day, meal)}
                       suggestionsLeft={suggestionsLeft}
                       onCreatePoll={handleCreatePoll}
                       onVote={handleVote}
-                      currentUserId={CURRENT_USER}
+                      currentUserId={currentUserId}
                     />
                   ))}
                 </motion.div>
@@ -123,7 +148,7 @@ const MenuPage = () => {
           </div>
 
           {/* Active Polls */}
-          <ActivePolls polls={polls} onVote={handleVote} currentUserId={CURRENT_USER} />
+          <ActivePolls polls={polls} onVote={handleVote} currentUserId={currentUserId} />
         </div>
       </div>
     </div>
