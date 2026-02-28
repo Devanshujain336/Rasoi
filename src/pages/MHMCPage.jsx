@@ -308,8 +308,10 @@ const ActivePollsTab = ({ polls, setPolls, pollDetail, setPollDetail, setShowCon
 
   const handleReject = async (pollId) => {
     try {
+      // The backend now deletes the poll when status is set to "rejected"
       await axios.put(`http://localhost:3001/api/menu/polls/${pollId}/status`, { status: "rejected" }, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
       setPollDetail(null);
+      // Refresh the list to remove the deleted poll from the UI
       onUpdate();
     } catch (error) {
       console.error("Failed to reject", error);
