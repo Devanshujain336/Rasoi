@@ -67,6 +67,12 @@ export const api = {
     searchStudents: (q) => request(`/api/billing/students/search?q=${encodeURIComponent(q)}`),
     billExtras: (body) => request("/api/billing/extras", { method: "POST", body }),
     getRecentExtras: () => request("/api/billing/extras/recent"),
+
+    // Menu & Ratings
+    getMenu: () => request("/api/menu"),
+    submitRating: (body) => request("/api/menu/ratings", { method: "POST", body }),
+    getMyRatings: (date) => request(`/api/menu/ratings/my?date=${date}`),
+    getRatingStats: (month) => request(`/api/menu/ratings/stats?month=${month}`),
 };
 
 export const setToken = (token) => {

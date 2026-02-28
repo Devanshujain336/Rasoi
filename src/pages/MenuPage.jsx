@@ -33,7 +33,9 @@ const MenuPage = () => {
   const [polls, setPolls] = useState(initialPolls);
   const [loading, setLoading] = useState(true);
   const [suggestionsLeft, setSuggestionsLeft] = useState(2);
-  const { user } = useAuth();
+  const [stats, setStats] = useState({});
+  const { user, role } = useAuth();
+  const isManagement = role === "mhmc" || role === "admin" || role === "munimji";
   const currentUserId = user?.id || "current_user";
 
   useEffect(() => {
@@ -60,7 +62,28 @@ const MenuPage = () => {
       }
     };
     fetchData();
-  }, []);
+    if (isManagement) fetchStats();
+  }, [isManagement]);
+
+  const fetchStats = async () => {
+    try {
+      const month = new Date().toISOString().slice(0, 7); // YYYY-MM
+      const res = await api.getRatingStats(month);
+      setStats(res);
+    } catch (error) {
+      console.error("Failed to fetch stats", error);
+    }
+  };
+
+  const getDayDate = (dayName) => {
+    const now = new Date();
+    const currentDay = now.getDay();
+    const targetDay = DAYS.indexOf(dayName) + 1; // Monday is 1
+    const diff = targetDay - (currentDay === 0 ? 7 : currentDay);
+    const d = new Date(now);
+    d.setDate(now.getDate() + diff);
+    return d.toISOString().split('T')[0];
+  };
 
   const getPollForSlot = (day, meal) => polls.find(p => p.day === day && p.meal === meal);
 
@@ -129,19 +152,32 @@ const MenuPage = () => {
                   <div className="flex items-center rounded-xl backdrop-blur-md bg-white/15 px-4 py-3">
                     <span className="font-display font-bold text-sm text-white">{day}</span>
                   </div>
-                  {MEALS.map(meal => (
-                    <MenuCard
-                      key={`${day}-${meal}`}
-                      day={day}
-                      meal={meal}
-                      items={menu[day]?.[meal] || sampleMenu[day][meal]}
-                      poll={getPollForSlot(day, meal)}
-                      suggestionsLeft={suggestionsLeft}
-                      onCreatePoll={handleCreatePoll}
-                      onVote={handleVote}
-                      currentUserId={currentUserId}
-                    />
-                  ))}
+                  {MEALS.map(meal => {
+                    const date = getDayDate(day);
+                    const satisfaction = stats[date]?.[meal];
+                    return (
+                      <div key={`${day}-${meal}`} className="relative">
+                        <MenuCard
+                          day={day}
+                          meal={meal}
+                          items={menu[day]?.[meal] || sampleMenu[day][meal]}
+                          poll={getPollForSlot(day, meal)}
+                          suggestionsLeft={suggestionsLeft}
+                          onCreatePoll={handleCreatePoll}
+                          onVote={handleVote}
+                          currentUserId={currentUserId}
+                        />
+                        {isManagement && satisfaction !== undefined && (
+                          <div className="absolute top-2 right-2 flex items-center gap-1 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded-full shadow-sm border border-border z-20">
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase">Rate:</span>
+                            <span className={`text-xs font-black ${satisfaction >= 70 ? "text-emerald" : satisfaction >= 40 ? "text-orange-500" : "text-destructive"}`}>
+                              {satisfaction}%
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </motion.div>
               ))}
             </div>

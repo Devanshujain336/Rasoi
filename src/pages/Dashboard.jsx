@@ -9,183 +9,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pi
 import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
 
-const treeData = [
-  {
-    date: "2026-02-13",
-    dayLabel: "Feb 13 (Thu)",
-    meals: {
-      breakfast: { taken: true, items: ["Poha", "Jalebi", "Tea"], time: "08:30" },
-      lunch: { taken: true, items: ["Dal", "Rice", "Sabzi", "Roti"], time: "13:15" },
-      dinner: { taken: true, items: ["Paneer Curry", "Roti", "Rice"], time: "20:00", extras: [{ item: "Ice Cream", price: 20 }] },
-    },
-  },
-  {
-    date: "2026-02-12",
-    dayLabel: "Feb 12 (Wed)",
-    meals: {
-      breakfast: { taken: true, items: ["Idli", "Sambar", "Chutney"], time: "08:15" },
-      lunch: { taken: true, items: ["Chole", "Rice", "Salad"], time: "13:00" },
-      dinner: { taken: false, reason: "Rebate - Home visit" },
-    },
-  },
-  {
-    date: "2026-02-11",
-    dayLabel: "Feb 11 (Tue)",
-    meals: {
-      breakfast: { taken: false, reason: "Skipped" },
-      lunch: { taken: true, items: ["Rajma", "Rice", "Raita"], time: "13:30" },
-      dinner: { taken: true, items: ["Mix Veg", "Roti"], time: "20:15", extras: [{ item: "Gulab Jamun", price: 25 }, { item: "Lassi", price: 20 }] },
-    },
-  },
-  {
-    date: "2026-02-10",
-    dayLabel: "Feb 10 (Mon)",
-    meals: {
-      breakfast: { taken: true, items: ["Paratha", "Curd", "Tea"], time: "08:45" },
-      lunch: { taken: true, items: ["Dal Fry", "Rice", "Papad"], time: "12:50" },
-      dinner: { taken: true, items: ["Egg Curry", "Roti", "Rice"], time: "19:45" },
-    },
-  },
-  {
-    date: "2026-02-09",
-    dayLabel: "Feb 9 (Sun)",
-    meals: {
-      breakfast: { taken: true, items: ["Chole Bhature", "Lassi"], time: "09:00" },
-      lunch: { taken: true, items: ["Biryani", "Raita"], time: "13:00", extras: [{ item: "Cold Drink", price: 20 }] },
-      dinner: { taken: true, items: ["Paneer Tikka", "Naan", "Dal"], time: "20:30" },
-    },
-  },
-  {
-    date: "2026-02-08",
-    dayLabel: "Feb 8 (Sat)",
-    meals: {
-      breakfast: { taken: true, items: ["Aloo Paratha", "Butter"], time: "08:30" },
-      lunch: { taken: false, reason: "Rebate" },
-      dinner: { taken: true, items: ["Kadhi", "Rice"], time: "20:00", extras: [{ item: "Rasmalai", price: 30 }] },
-    },
-  },
-  {
-    date: "2026-02-07",
-    dayLabel: "Feb 7 (Fri)",
-    meals: {
-      breakfast: { taken: true, items: ["Upma", "Tea"], time: "08:20" },
-      lunch: { taken: true, items: ["Sambar Rice", "Appalam"], time: "13:10" },
-      dinner: { taken: true, items: ["Butter Chicken", "Naan"], time: "20:00", extras: [{ item: "Ice Cream", price: 20 }] },
-    },
-  },
-];
-
-const dailyExtrasChart = [
-  { day: "Feb 7", amount: 20 },
-  { day: "Feb 8", amount: 30 },
-  { day: "Feb 9", amount: 20 },
-  { day: "Feb 10", amount: 0 },
-  { day: "Feb 11", amount: 45 },
-  { day: "Feb 12", amount: 0 },
-  { day: "Feb 13", amount: 20 },
-];
-
-const categoryBreakdown = [
-  { name: "Desserts", value: 70, color: "hsl(340, 70%, 55%)" },
-  { name: "Beverages", value: 40, color: "hsl(175, 60%, 45%)" },
-  { name: "Sweets", value: 55, color: "hsl(35, 90%, 55%)" },
-  { name: "Dairy", value: 10, color: "hsl(205, 70%, 55%)" },
-];
-
-const mealIcons = {
-  breakfast: Coffee,
-  lunch: Sun,
-  dinner: Moon,
-};
-
-const mealColors = {
-  breakfast: { active: "bg-accent/20 text-accent-foreground border-accent/30", dot: "bg-accent" },
-  lunch: { active: "bg-emerald/20 text-emerald border-emerald/30", dot: "bg-emerald" },
-  dinner: { active: "bg-primary/20 text-primary border-primary/30", dot: "bg-primary" },
-};
-
-const StatCard = ({ icon: Icon, label, value, trend, trendUp, gradient }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="bg-card rounded-2xl p-5 shadow-card border border-border"
-  >
-    <div className="flex items-center justify-between mb-3">
-      <div className={`w-10 h-10 rounded-xl ${gradient} flex items-center justify-center`}>
-        <Icon className="w-5 h-5 text-primary-foreground" />
-      </div>
-      {trend && (
-        <span className={`text-xs font-medium flex items-center gap-0.5 ${trendUp ? "text-emerald" : "text-destructive"}`}>
-          {trendUp ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-          {trend}
-        </span>
-      )}
-    </div>
-    <p className="text-2xl font-display font-bold text-foreground">{value}</p>
-    <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
-  </motion.div>
-);
-
-const MealNode = ({ type, data }) => {
-  const Icon = mealIcons[type];
-  const colors = mealColors[type];
-  const [showDetail, setShowDetail] = useState(false);
-
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setShowDetail(!showDetail)}
-        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium border transition-all ${data.taken ? colors.active : "bg-muted text-muted-foreground border-border line-through opacity-60"
-          }`}
-      >
-        <Icon className="w-3.5 h-3.5" />
-        <span className="capitalize">{type}</span>
-        {data.extras?.length > 0 && (
-          <span className="ml-1 w-4 h-4 rounded-full bg-gradient-warm text-primary-foreground text-[10px] font-bold flex items-center justify-center">
-            +
-          </span>
-        )}
-      </button>
-      <AnimatePresence>
-        {showDetail && data.taken && (
-          <motion.div
-            initial={{ opacity: 0, y: -5, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -5, scale: 0.95 }}
-            className="absolute top-full left-0 mt-2 z-20 bg-card rounded-xl p-4 shadow-elevated border border-border min-w-[200px]"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-foreground capitalize">{type}</span>
-              <button onClick={() => setShowDetail(false)}>
-                <X className="w-3 h-3 text-muted-foreground" />
-              </button>
-            </div>
-            {data.time && <p className="text-[10px] text-muted-foreground mb-2">{data.time}</p>}
-            <div className="space-y-1">
-              {data.items?.map((item, i) => (
-                <p key={i} className="text-xs text-foreground">• {item}</p>
-              ))}
-            </div>
-            {data.extras?.length > 0 && (
-              <div className="mt-2 pt-2 border-t border-border">
-                <p className="text-[10px] font-semibold text-primary mb-1">Extras:</p>
-                {data.extras.map((e, i) => (
-                  <p key={i} className="text-xs text-muted-foreground flex justify-between">
-                    <span>{e.item}</span>
-                    <span className="text-primary font-medium">₹{e.price}</span>
-                  </p>
-                ))}
-              </div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-      {!data.taken && data.reason && (
-        <p className="text-[10px] text-destructive mt-1 ml-1">{data.reason}</p>
-      )}
-    </div>
-  );
-};
+// Modern playful components
 
 // Modern playful components
 const FloatingFeedbackButton = () => (
@@ -198,7 +22,7 @@ const FloatingFeedbackButton = () => (
   </motion.button>
 );
 
-const TodayMealCard = ({ type, items, time, isNext }) => {
+const TodayMealCard = ({ type, items, time, isNext, userRating, onRate }) => {
   const gradients = {
     Breakfast: "bg-gradient-to-br from-[#FFD194] to-[#70E1F5]",
     Lunch: "bg-gradient-to-br from-[#f6d365] to-[#fda085]",
@@ -206,6 +30,7 @@ const TodayMealCard = ({ type, items, time, isNext }) => {
   };
 
   const emojis = { Breakfast: "☕", Lunch: "🍛", Dinner: "🥘" };
+  const ratingMap = { 1: "🔥", 0: "😐", "-1": "😢" };
 
   return (
     <motion.div
@@ -239,16 +64,26 @@ const TodayMealCard = ({ type, items, time, isNext }) => {
 
       {/* Ratings */}
       <div className="border-t border-border/50 pt-4 relative z-10 flex items-center justify-between">
-        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Rate this meal</span>
+        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+          {userRating !== undefined ? "Your Rating" : "Rate this meal"}
+        </span>
         <div className="flex gap-2">
-          {['🔥', '😐', '😢'].map(emoji => (
+          {[
+            { s: 1, e: '🔥' },
+            { s: 0, e: '😐' },
+            { s: -1, e: '😢' }
+          ].map(({ s, e }) => (
             <motion.button
-              key={emoji}
+              key={e}
               whileHover={{ scale: 1.2 }}
               whileTap={{ scale: 0.9 }}
-              className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-xl hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-border"
+              onClick={() => onRate(type, s)}
+              className={`w-10 h-10 rounded-full flex items-center justify-center text-xl transition-all border ${userRating === s
+                ? "bg-primary text-white border-primary shadow-md scale-110"
+                : "bg-muted hover:bg-white hover:shadow-md border-transparent hover:border-border"
+                }`}
             >
-              {emoji}
+              {e}
             </motion.button>
           ))}
         </div>
@@ -280,11 +115,81 @@ const WeeklyMenuCard = ({ day, meals }) => (
 const Dashboard = () => {
   const { user, profile, role } = useAuth();
   const [summary, setSummary] = useState(null);
+  const [menu, setMenu] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeMeal, setActiveMeal] = useState("");
+  const [userRatings, setUserRatings] = useState({});
 
   useEffect(() => {
     fetchSummary();
+    fetchMenu();
+    fetchMyRatings();
+    determineActiveMeal();
   }, []);
+
+  const fetchMyRatings = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const data = await api.getMyRatings(today);
+      const ratingsMap = {};
+      data.forEach(r => {
+        ratingsMap[r.meal] = r.score;
+      });
+      setUserRatings(ratingsMap);
+    } catch (err) {
+      console.error("Failed to fetch ratings:", err);
+    }
+  };
+
+  const handleRate = async (meal, score) => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      await api.submitRating({ date: today, meal, score });
+      setUserRatings(prev => ({ ...prev, [meal]: score }));
+    } catch (err) {
+      console.error("Failed to submit rating:", err);
+    }
+  };
+
+  const fetchMenu = async () => {
+    try {
+      const data = await api.getMenu();
+      if (data && data.menu) {
+        setMenu(data.menu);
+      }
+    } catch (err) {
+      console.error("Failed to fetch menu:", err);
+    }
+  };
+
+  const determineActiveMeal = () => {
+    const now = new Date();
+    const hour = now.getHours();
+    const minute = now.getMinutes();
+    const time = hour * 60 + minute;
+
+    if (time < 10 * 60) setActiveMeal("Breakfast");
+    else if (time < 14 * 60 + 30) setActiveMeal("Lunch");
+    else setActiveMeal("Dinner");
+  };
+
+  const getWeekDates = () => {
+    const now = new Date();
+    const day = now.getDay();
+    const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(diff);
+
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(startOfWeek);
+      d.setDate(startOfWeek.getDate() + i);
+      const dayName = d.toLocaleDateString("en-US", { weekday: "long" });
+      const dayShort = d.toLocaleDateString("en-US", { weekday: "short" });
+      const label = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      const isToday = d.toDateString() === now.toDateString();
+      return { dayName, dayShort, label, isToday };
+    });
+  };
 
   const fetchSummary = async () => {
     try {
@@ -358,20 +263,26 @@ const Dashboard = () => {
               <TodayMealCard
                 type="Breakfast"
                 time="08:00 AM - 10:00 AM"
-                items={["Poha", "Jalebi", "Milk & Tea", "Boiled Egg"]}
-                isNext={false}
+                items={menu ? (menu[new Date().toLocaleDateString("en-US", { weekday: "long" })]?.Breakfast || ["Standard Breakfast"]) : ["Poha", "Jalebi", "Milk & Tea", "Boiled Egg"]}
+                isNext={activeMeal === "Breakfast"}
+                userRating={userRatings["Breakfast"]}
+                onRate={handleRate}
               />
               <TodayMealCard
                 type="Lunch"
                 time="01:00 PM - 02:30 PM"
-                items={["Dal Makhani", "Jeera Rice", "Mix Veg", "Raita"]}
-                isNext={true}
+                items={menu ? (menu[new Date().toLocaleDateString("en-US", { weekday: "long" })]?.Lunch || ["Standard Lunch"]) : ["Dal Makhani", "Jeera Rice", "Mix Veg", "Raita"]}
+                isNext={activeMeal === "Lunch"}
+                userRating={userRatings["Lunch"]}
+                onRate={handleRate}
               />
               <TodayMealCard
                 type="Dinner"
                 time="08:00 PM - 09:30 PM"
-                items={["Paneer Butter Masala", "Tandoori Roti", "Ice Cream", "Salad"]}
-                isNext={false}
+                items={menu ? (menu[new Date().toLocaleDateString("en-US", { weekday: "long" })]?.Dinner || ["Standard Dinner"]) : ["Paneer Butter Masala", "Tandoori Roti", "Ice Cream", "Salad"]}
+                isNext={activeMeal === "Dinner"}
+                userRating={userRatings["Dinner"]}
+                onRate={handleRate}
               />
             </div>
 
@@ -381,20 +292,20 @@ const Dashboard = () => {
                 This Week's Menu 📅
               </h2>
               <div className="flex overflow-x-auto gap-4 pb-6 snap-x snap-mandatory hide-scroll">
-                {[
-                  { day: 'Mon', label: 'Feb 10', m: treeData[3].meals },
-                  { day: 'Tue', label: 'Feb 11', m: treeData[2].meals },
-                  { day: 'Wed', label: 'Feb 12', m: treeData[1].meals },
-                  { day: 'Thu', label: 'Feb 13 (Today)', m: treeData[0].meals },
-                  { day: 'Fri', label: 'Feb 14', m: treeData[6].meals },
-                  { day: 'Sat', label: 'Feb 15', m: treeData[5].meals },
-                ].map((item, i) => (
-                  <WeeklyMenuCard key={i} day={`${item.day}, ${item.label}`} meals={{
-                    breakfast: { items: item.m.breakfast.items || ['Standard Breakfast'] },
-                    lunch: { items: item.m.lunch.items || ['Standard Lunch'] },
-                    dinner: { items: item.m.dinner.items || ['Standard Dinner'] },
-                  }} />
-                ))}
+                {getWeekDates().map((item, i) => {
+                  const dayMenu = menu ? menu[item.dayName] : null;
+                  return (
+                    <WeeklyMenuCard
+                      key={i}
+                      day={`${item.dayShort}, ${item.label}${item.isToday ? ' (Today)' : ''}`}
+                      meals={{
+                        breakfast: { items: dayMenu?.Breakfast || ['Standard Breakfast'] },
+                        lunch: { items: dayMenu?.Lunch || ['Standard Lunch'] },
+                        dinner: { items: dayMenu?.Dinner || ['Standard Dinner'] },
+                      }}
+                    />
+                  );
+                })}
               </div>
             </div>
           </div>

@@ -2,9 +2,17 @@ import express from "express";
 import Menu from "../models/Menu.js";
 import Poll from "../models/Poll.js";
 import Profile from "../models/Profile.js";
+import Rating from "../models/Rating.js";
 import { protect as authMiddleware } from "../middleware/auth.js";
+import { z } from "zod";
 
 const router = express.Router();
+
+const ratingSubmitSchema = z.object({
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    meal: z.enum(["Breakfast", "Lunch", "Dinner"]),
+    score: z.union([z.literal(1), z.literal(0), z.literal(-1)])
+});
 
 const initialMenu = {
     Monday: { Breakfast: ["Poha", "Chai", "Banana"], Lunch: ["Dal", "Rice", "Roti", "Aloo Gobi"], Dinner: ["Paneer Butter Masala", "Naan", "Salad"] },
@@ -75,17 +83,22 @@ router.post("/polls", authMiddleware, async (req, res) => {
 // VOTE ON POLL (any logged in user)
 router.post("/polls/:id/vote", authMiddleware, async (req, res) => {
     try {
-        const poll = await Poll.findById(req.params.id);
-        if (!poll) return res.status(404).json({ error: "Poll not found" });
-
         const userId = String(req.user._id);
-        if (poll.votedBy.includes(userId)) {
-            return res.status(400).json({ error: "Already voted" });
+
+        // Atomically increment votes and add user to votedBy only if not already present
+        const poll = await Poll.findOneAndUpdate(
+            { _id: req.params.id, votedBy: { $ne: userId } },
+            { $inc: { votes: 1 }, $addToSet: { votedBy: userId } },
+            { new: true }
+        );
+
+        if (!poll) {
+            // Check if poll exists or already voted
+            const exists = await Poll.findById(req.params.id);
+            if (!exists) return res.status(404).json({ error: "Poll not found" });
+            return res.status(400).json({ error: "You have already voted on this poll" });
         }
 
-        poll.votes += 1;
-        poll.votedBy.push(userId);
-        await poll.save();
         res.json(poll);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -127,6 +140,73 @@ router.put("/polls/:id/status", authMiddleware, async (req, res) => {
 
         await poll.save();
         res.json(poll);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// SUBMIT RATING
+router.post("/ratings", authMiddleware, async (req, res) => {
+    try {
+        const validation = ratingSubmitSchema.safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({ error: validation.error.errors[0].message });
+        }
+
+        const { date, meal, score } = validation.data;
+        const rating = await Rating.findOneAndUpdate(
+            { user_id: req.user._id, date, meal },
+            { score },
+            { upsert: true, new: true }
+        );
+        res.json(rating);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// GET USER RATINGS FOR A DATE
+router.get("/ratings/my", authMiddleware, async (req, res) => {
+    try {
+        const { date } = req.query;
+        const ratings = await Rating.find({ user_id: req.user._id, date });
+        res.json(ratings);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// GET RATINGS STATS (MHMC/Admin/MunimJi)
+router.get("/ratings/stats", authMiddleware, async (req, res) => {
+    try {
+        const { month } = req.query; // YYYY-MM
+        const start = `${month}-01`;
+        const end = `${month}-31`; // Simple approach
+
+        const stats = await Rating.aggregate([
+            { $match: { date: { $gte: start, $lte: end } } },
+            {
+                $group: {
+                    _id: { date: "$date", meal: "$meal" },
+                    avgScore: { $avg: "$score" },
+                    total: { $sum: 1 },
+                    positive: { $sum: { $cond: [{ $eq: ["$score", 1] }, 1, 0] } },
+                    negative: { $sum: { $cond: [{ $eq: ["$score", -1] }, 1, 0] } }
+                }
+            }
+        ]);
+
+        // Format into a more usable object: { "2026-02-28": { Breakfast: 85, Lunch: 70, ... } }
+        const formatted = {};
+        stats.forEach(s => {
+            const date = s._id.date;
+            if (!formatted[date]) formatted[date] = {};
+            // Satisfaction rate = (positive count / total count) * 100
+            const rate = Math.round((s.positive / s.total) * 100);
+            formatted[date][s._id.meal] = rate;
+        });
+
+        res.json(formatted);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
