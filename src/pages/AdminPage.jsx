@@ -1,39 +1,104 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Building2, Upload, Users, Plus, Trash2, Shield, AlertCircle, CheckCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Building2, Upload, Users, Plus, Shield, AlertCircle, CheckCircle, Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import api from "@/lib/api";
 
 const AdminPage = () => {
-  const { user, role } = useAuth();
+  const { user, role, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [hostels, setHostels] = useState([]);
   const [newHostel, setNewHostel] = useState({ name: "", code: "" });
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState({ type: "", text: "" });
   const [selectedHostel, setSelectedHostel] = useState(null);
+  const [allowedEmails, setAllowedEmails] = useState([]);
+  const [loadingEmails, setLoadingEmails] = useState(false);
   const [importRole, setImportRole] = useState("student");
   const [importing, setImporting] = useState(false);
+  const [deleting, setDeleting] = useState(null); // ID of hostel being deleted
   const fileRef = useRef(null);
 
   useEffect(() => {
-    if (role !== "admin") { navigate("/"); return; }
+    // Wait for auth to finish loading
+    if (authLoading) return;
+
+    if (role !== "admin") {
+      console.log("🚫 Not an admin, redirecting...");
+      // navigate("/"); 
+    }
+
     fetchHostels();
-  }, [role]);
+  }, [role, authLoading]);
+
+  useEffect(() => {
+    if (selectedHostel) {
+      fetchHostelEmails(selectedHostel);
+    } else {
+      setAllowedEmails([]);
+    }
+  }, [selectedHostel]);
+
+  const fetchHostelEmails = async (id) => {
+    setLoadingEmails(true);
+    try {
+      const data = await api.getHostelEmails(id);
+      setAllowedEmails(data || []);
+    } catch (err) {
+      console.error("Error fetching emails:", err);
+    } finally {
+      setLoadingEmails(false);
+    }
+  };
 
   const fetchHostels = async () => {
-    const { data } = await supabase.from("hostels").select("*").order("name");
-    setHostels(data || []);
-    setLoading(false);
+    setLoading(true);
+    try {
+      const data = await api.getHostels();
+      setHostels(data || []);
+    } catch (err) {
+      setMsg({ type: "error", text: err.message });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const addHostel = async (e) => {
     e.preventDefault();
     if (!newHostel.name.trim() || !newHostel.code.trim()) return;
-    const { error } = await supabase.from("hostels").insert(newHostel);
-    if (error) setMsg({ type: "error", text: error.message });
-    else { setMsg({ type: "success", text: `Hostel "${newHostel.name}" created!` }); setNewHostel({ name: "", code: "" }); fetchHostels(); }
+    try {
+      await api.createHostel(newHostel);
+      setMsg({ type: "success", text: `Hostel "${newHostel.name}" created!` });
+      setNewHostel({ name: "", code: "" });
+      fetchHostels();
+    } catch (err) {
+      setMsg({ type: "error", text: err.message });
+    }
+  };
+
+  const deleteHostel = async (e, id, name) => {
+    e.stopPropagation(); // Don't select the hostel when clicking delete
+
+    const confirmDelete = window.confirm(
+      `⚠️ WARNING: This will permanently delete the hostel "${name}" and ALL its data (Allowed Emails, Profiles, Forum Posts, Comments, and Notifications). This action CANNOT be undone.\n\nAre you absolutely sure?`
+    );
+
+    if (!confirmDelete) return;
+
+    setDeleting(id);
+    setMsg({ type: "", text: "" });
+
+    try {
+      const res = await api.deleteHostel(id);
+      setMsg({ type: "success", text: res.message });
+      if (selectedHostel === id) setSelectedHostel(null);
+      fetchHostels();
+    } catch (err) {
+      setMsg({ type: "error", text: err.message });
+    } finally {
+      setDeleting(null);
+    }
   };
 
   const handleCSVUpload = async (e) => {
@@ -54,12 +119,13 @@ const AdminPage = () => {
       return;
     }
 
-    const { data, error } = await supabase.functions.invoke("import-students", {
-      body: { hostel_id: selectedHostel, emails, role: importRole },
-    });
-
-    if (error) setMsg({ type: "error", text: error.message });
-    else setMsg({ type: "success", text: `Successfully imported ${data.imported} emails as ${importRole}s.` });
+    try {
+      const data = await api.importStudents({ hostel_id: selectedHostel, emails, role: importRole });
+      setMsg({ type: "success", text: `Successfully imported ${data.imported} emails as ${importRole}s.` });
+      fetchHostelEmails(selectedHostel); // Refresh list
+    } catch (err) {
+      setMsg({ type: "error", text: err.message });
+    }
 
     setImporting(false);
     if (fileRef.current) fileRef.current.value = "";
@@ -107,10 +173,21 @@ const AdminPage = () => {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {hostels.map((h) => (
-                  <div key={h.id} className={`p-4 rounded-xl border transition-all cursor-pointer ${selectedHostel === h.id ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"}`}
-                    onClick={() => setSelectedHostel(h.id)}>
+                  <div key={h._id} className={`p-4 rounded-xl border transition-all cursor-pointer relative group ${selectedHostel === h._id ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"}`}
+                    onClick={() => setSelectedHostel(h._id)}>
                     <p className="font-semibold text-foreground text-sm">{h.name}</p>
                     <p className="text-xs text-muted-foreground">Code: {h.code}</p>
+                    <button
+                      onClick={(e) => deleteHostel(e, h._id, h.name)}
+                      disabled={deleting === h._id}
+                      className="absolute top-2 right-2 p-1.5 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity disabled:cursor-not-allowed"
+                    >
+                      {deleting === h._id ? (
+                        <div className="w-4 h-4 border-2 border-destructive border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                    </button>
                   </div>
                 ))}
               </div>
@@ -119,40 +196,80 @@ const AdminPage = () => {
 
           {/* Import Students */}
           {selectedHostel && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-              className="bg-card rounded-2xl p-6 shadow-card border border-border">
-              <h2 className="font-display text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-                <Upload className="w-5 h-5 text-primary" /> Import Students to {hostels.find((h) => h.id === selectedHostel)?.name}
-              </h2>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Role</label>
-                  <div className="flex gap-2 mt-1.5">
-                    {["student", "mhmc"].map((r) => (
-                      <button key={r} onClick={() => setImportRole(r)}
-                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${importRole === r ? "bg-gradient-warm text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
-                        {r === "mhmc" ? <><Shield className="w-3.5 h-3.5 inline mr-1" />MHMC</> : "Student"}
-                      </button>
-                    ))}
+            <div className="space-y-6">
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                className="bg-card rounded-2xl p-6 shadow-card border border-border">
+                <h2 className="font-display text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+                  <Upload className="w-5 h-5 text-primary" /> Import to {hostels.find((h) => h._id === selectedHostel)?.name}
+                </h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Role</label>
+                    <div className="flex gap-2 mt-1.5 flex-wrap">
+                      {["student", "mhmc", "munimji"].map((r) => (
+                        <button key={r} onClick={() => setImportRole(r)}
+                          className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${importRole === r ? "bg-gradient-warm text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                          {r === "mhmc" ? <><Shield className="w-3.5 h-3.5 inline mr-1" />MHMC</> : r.charAt(0).toUpperCase() + r.slice(1)}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Upload CSV / TXT</label>
-                  <p className="text-xs text-muted-foreground mb-2">File with one email per line or comma-separated emails</p>
-                  <input ref={fileRef} type="file" accept=".csv,.txt,.xlsx" onChange={handleCSVUpload} disabled={importing}
-                    className="w-full text-sm text-muted-foreground file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-gradient-warm file:text-primary-foreground hover:file:cursor-pointer" />
-                </div>
-
-                {importing && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                    Importing...
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Upload CSV / TXT</label>
+                    <p className="text-xs text-muted-foreground mb-2">File with one email per line or comma-separated emails</p>
+                    <input ref={fileRef} type="file" accept=".csv,.txt" onChange={handleCSVUpload} disabled={importing}
+                      className="w-full text-sm text-muted-foreground file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-gradient-warm file:text-primary-foreground hover:file:cursor-pointer" />
                   </div>
-                )}
-              </div>
-            </motion.div>
+                  {importing && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      Importing...
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+
+              {/* View Records */}
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                className="bg-card rounded-2xl p-6 shadow-card border border-border overflow-hidden">
+                <div className="p-6 border-b border-border flex justify-between items-center">
+                  <h2 className="font-display text-lg font-bold text-foreground flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-primary" /> Approved Emails ({allowedEmails.length})
+                  </h2>
+                  {loadingEmails && <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />}
+                </div>
+                <div className="max-h-[400px] overflow-y-auto">
+                  {allowedEmails.length === 0 ? (
+                    <p className="p-8 text-center text-sm text-muted-foreground">No emails approved for this hostel yet.</p>
+                  ) : (
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-muted/50 sticky top-0">
+                        <tr>
+                          <th className="px-6 py-3 font-semibold text-muted-foreground">Email</th>
+                          <th className="px-6 py-3 font-semibold text-muted-foreground">Role</th>
+                          <th className="px-6 py-3 font-semibold text-muted-foreground text-right">Added</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {allowedEmails.map((a) => (
+                          <tr key={a._id} className="hover:bg-muted/30 transition-colors">
+                            <td className="px-6 py-4 font-medium text-foreground">{a.email}</td>
+                            <td className="px-6 py-4">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider ${a.role === "mhmc" ? "bg-secondary/10 text-secondary border border-secondary/20" : "bg-primary/10 text-primary border border-primary/20"}`}>
+                                {a.role}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-right text-muted-foreground text-xs">
+                              {new Date(a.created_at).toLocaleDateString()}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </motion.div>
+            </div>
           )}
         </motion.div>
       </div>

@@ -6,8 +6,8 @@ import foodVideo4 from "@/assets/food-bg-video-4.mp4";
 import foodVideo5 from "@/assets/food-bg-video-5.mp4";
 
 const VIDEOS = [foodVideo1, foodVideo2, foodVideo3, foodVideo4, foodVideo5];
-const ROTATE_INTERVAL = 15000;
-const FADE_DURATION = 1000;
+const ROTATE_INTERVAL = 4000;
+const FADE_DURATION = 500;
 
 const VideoBackground = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -20,7 +20,7 @@ const VideoBackground = () => {
     // Preload and start playing next video before fading
     if (nextVideoRef.current) {
       nextVideoRef.current.currentTime = 0;
-      nextVideoRef.current.play().catch(() => {});
+      nextVideoRef.current.play().catch(() => { });
     }
     setShowNext(true);
 

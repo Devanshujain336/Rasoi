@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Plus, User, X, Check, Clock, ShoppingBag, Minus } from "lucide-react";
+import { Search, Plus, User, X, Check, Clock, ShoppingBag, Minus, ShieldAlert } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import api from "@/lib/api";
 
 const extraItems = [
   { id: "1", name: "Ice Cream", price: 20, category: "desserts" },
@@ -13,13 +15,6 @@ const extraItems = [
   { id: "8", name: "Bread Pakora", price: 20, category: "snacks" },
   { id: "9", name: "Cold Drink", price: 20, category: "beverages" },
   { id: "10", name: "Chocolate Milk", price: 25, category: "beverages" },
-];
-
-const studentDB = [
-  { id: "s1", roll: "2024CS001", name: "Arjun Sharma", photo: null, floor: 2, monthExtras: 450 },
-  { id: "s2", roll: "2024CS002", name: "Priya Patel", photo: null, floor: 3, monthExtras: 320 },
-  { id: "s3", roll: "2024ME015", name: "Rahul Kumar", photo: null, floor: 1, monthExtras: 180 },
-  { id: "s4", roll: "2024EE010", name: "Sneha Gupta", photo: null, floor: 2, monthExtras: 560 },
 ];
 
 const categoryGradients = {
@@ -41,6 +36,7 @@ const categoryBorders = {
 };
 
 const ExtrasPage = () => {
+  const { role } = useAuth();
   const [rollSearch, setRollSearch] = useState("");
   const [matchingStudents, setMatchingStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -51,21 +47,35 @@ const ExtrasPage = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [billedName, setBilledName] = useState("");
   const [billedAmount, setBilledAmount] = useState(0);
-  const [recentTransactions, setRecentTransactions] = useState([
-    { student: "Arjun Sharma", roll: "2024CS001", items: ["Ice Cream", "Lassi"], total: 40, time: "2:30 PM" },
-    { student: "Priya Patel", roll: "2024CS002", items: ["Gulab Jamun"], total: 25, time: "2:15 PM" },
-    { student: "Rahul Kumar", roll: "2024ME015", items: ["Cold Coffee", "Samosa"], total: 40, time: "1:50 PM" },
-    { student: "Sneha Gupta", roll: "2024EE010", items: ["Rasmalai", "Dahi"], total: 40, time: "1:30 PM" },
-  ]);
+  const [recentTransactions, setRecentTransactions] = useState([]);
+  const searchTimeout = useRef(null);
+
+  useEffect(() => {
+    fetchRecent();
+  }, []);
+
+  const fetchRecent = async () => {
+    try {
+      const data = await api.getRecentExtras();
+      setRecentTransactions(data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const handleSearchChange = (value) => {
     setRollSearch(value);
-    if (value.length > 0) {
-      const matches = studentDB.filter(s =>
-        s.roll.toLowerCase().includes(value.toLowerCase()) ||
-        s.name.toLowerCase().includes(value.toLowerCase())
-      );
-      setMatchingStudents(matches);
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+
+    if (value.length >= 2) {
+      searchTimeout.current = setTimeout(async () => {
+        try {
+          const res = await api.searchStudents(value);
+          setMatchingStudents(res || []);
+        } catch (err) {
+          console.error(err);
+        }
+      }, 300);
     } else {
       setMatchingStudents([]);
     }
@@ -101,21 +111,23 @@ const ExtrasPage = () => {
 
   const totalAmount = selectedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
-  const handleConfirm = () => {
-    setBilledName(selectedStudent.name);
-    setBilledAmount(totalAmount);
-    setRecentTransactions(prev => [{
-      student: selectedStudent.name,
-      roll: selectedStudent.roll,
-      items: selectedItems.map(i => `${i.name}${i.quantity > 1 ? ` ×${i.quantity}` : ""}`),
-      total: totalAmount,
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    }, ...prev.slice(0, 9)]);
-    setShowSuccess(true);
-    setSelectedStudent(null);
-    setSelectedItems([]);
-    setRollSearch("");
-    setTimeout(() => setShowSuccess(false), 1000);
+  const handleConfirm = async () => {
+    try {
+      await api.billExtras({
+        student_id: selectedStudent.id,
+        items: selectedItems.map(i => ({ name: i.name, price: i.price, quantity: i.quantity }))
+      });
+      fetchRecent();
+      setBilledName(selectedStudent.name);
+      setBilledAmount(totalAmount);
+      setShowSuccess(true);
+      setSelectedStudent(null);
+      setSelectedItems([]);
+      setRollSearch("");
+      setTimeout(() => setShowSuccess(false), 1500);
+    } catch (err) {
+      alert(err.message || "Failed to bill items");
+    }
   };
 
   const handleCancel = () => {
@@ -131,6 +143,18 @@ const ExtrasPage = () => {
     setNewItem({ name: "", price: "", category: "desserts" });
     setShowAddItem(false);
   };
+
+  if (!["admin", "munimji"].includes(role)) {
+    return (
+      <div className="min-h-screen pt-40 flex flex-col items-center text-center px-4">
+        <ShieldAlert className="w-16 h-16 text-destructive opacity-80 mb-4" />
+        <h1 className="text-2xl font-display font-bold text-foreground">Access Denied</h1>
+        <p className="text-muted-foreground mt-2 max-w-sm">
+          You do not have permission to access the Extras Billing System. Only Admins and MunimJis are authorized.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-20 pb-12 bg-background">

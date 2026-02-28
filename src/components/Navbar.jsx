@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  UtensilsCrossed, LayoutDashboard, Receipt, Vote, 
+import {
+  UtensilsCrossed, LayoutDashboard, Receipt, Vote,
   ScanLine, MessageSquare, Menu, X, CalendarCheck, CreditCard, IndianRupee,
   User, LogOut, Settings, ChevronDown, Shield
 } from "lucide-react";
@@ -11,14 +11,15 @@ import NotificationBell from "@/components/NotificationBell";
 
 const navItems = [
   { path: "/", label: "Home", icon: UtensilsCrossed },
-  { path: "/menu", label: "Menu & Polls", icon: CalendarCheck },
-  { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/extras", label: "Extras", icon: CreditCard },
-  { path: "/rebate", label: "Rebate", icon: Receipt },
-  { path: "/billing", label: "Billing", icon: IndianRupee },
-  { path: "/mhmc", label: "MHMC", icon: Vote },
-  { path: "/nutrition", label: "AI Nutrition", icon: ScanLine },
-  { path: "/forum", label: "Forum", icon: MessageSquare },
+  { path: "/menu", label: "Menu & Polls", icon: CalendarCheck, roles: ["student", "mhmc", "admin", "munimji"] },
+  { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["student", "mhmc", "admin", "munimji"] },
+  { path: "/extras", label: "Extras", icon: CreditCard, roles: ["admin", "munimji"] },
+  { path: "/rebate", label: "Rebate", icon: Receipt, roles: ["student", "mhmc", "admin", "munimji"] },
+  { path: "/billing", label: "Billing", icon: IndianRupee, roles: ["student", "mhmc", "admin"] },
+  { path: "/mhmc", label: "MHMC", icon: Vote, roles: ["mhmc", "admin"] },
+  { path: "/nutrition", label: "AI Nutrition", icon: ScanLine, roles: ["student", "mhmc", "admin"] },
+  { path: "/forum", label: "Forum", icon: MessageSquare, roles: ["student", "mhmc", "admin"] },
+  { path: "/admin", label: "Admin Panel", icon: Shield, roles: ["admin"] },
 ];
 
 const Navbar = () => {
@@ -35,15 +36,13 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-border">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b-2 border-border shadow-sm">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-lg bg-gradient-warm flex items-center justify-center">
-              <UtensilsCrossed className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="font-display font-bold text-xl text-foreground">
-              Mess<span className="text-gradient-warm">Hub</span>
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="text-3xl group-hover:rotate-12 transition-transform drop-shadow-sm">🍲</div>
+            <span className="font-display font-black text-2xl text-foreground">
+              Rasoi
             </span>
           </Link>
 
@@ -55,9 +54,8 @@ const Navbar = () => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`relative px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                  }`}
+                  className={`relative px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                    } ${item.roles && !item.roles.includes(role) ? "hidden" : ""}`}
                 >
                   {isActive && (
                     <motion.div
@@ -89,7 +87,10 @@ const Navbar = () => {
                   </div>
                   <div className="text-left">
                     <p className="text-xs font-semibold text-foreground leading-none">{profile?.full_name || "Student"}</p>
-                    <p className="text-[10px] text-muted-foreground capitalize">{hostel?.name ? `${hostel.name} • ` : ""}{role === "mhmc" ? "MHMC Member" : role}</p>
+                    <p className="text-[10px] text-muted-foreground capitalize">
+                      {hostel?.name ? `${hostel.name} • ` : ""}
+                      {role === "mhmc" ? "MHMC Member" : role === "munimji" ? "MunimJi" : role}
+                    </p>
                   </div>
                   <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${profileOpen ? "rotate-180" : ""}`} />
                 </button>
@@ -103,7 +104,7 @@ const Navbar = () => {
                       className="absolute right-0 top-full mt-2 w-52 bg-card rounded-2xl shadow-elevated border border-border overflow-hidden z-50"
                     >
                       {/* Profile header */}
-                      <div className="p-4 border-b border-border bg-gradient-warm/5">
+                      <div className="p-4 border-b-2 border-border bg-[#FFF8F0]">
                         <p className="text-sm font-semibold text-foreground">{profile?.full_name || "Student"}</p>
                         <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                         {profile?.roll_number && (
@@ -127,11 +128,18 @@ const Navbar = () => {
                           <IndianRupee className="w-4 h-4 text-muted-foreground" />
                           My Billing
                         </Link>
-                        {(role === "mhmc" || role === "admin") && (
+                        {role === "mhmc" && (
                           <Link to="/mhmc" onClick={() => setProfileOpen(false)}
                             className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-foreground hover:bg-muted transition-colors">
                             <Shield className="w-4 h-4 text-muted-foreground" />
                             MHMC Panel
+                          </Link>
+                        )}
+                        {role === "admin" && (
+                          <Link to="/admin" onClick={() => setProfileOpen(false)}
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-foreground hover:bg-muted transition-colors font-bold text-primary">
+                            <Shield className="w-4 h-4 text-primary" />
+                            Admin Panel
                           </Link>
                         )}
                         <button onClick={handleSignOut}
@@ -180,7 +188,9 @@ const Navbar = () => {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-foreground">{profile?.full_name || "Student"}</p>
-                    <p className="text-xs text-muted-foreground capitalize">{role === "mhmc" ? "MHMC Member" : role}</p>
+                    <p className="text-xs text-muted-foreground capitalize">
+                      {role === "mhmc" ? "MHMC Member" : role === "munimji" ? "MunimJi" : role}
+                    </p>
                   </div>
                 </div>
               )}
@@ -192,9 +202,8 @@ const Navbar = () => {
                     key={item.path}
                     to={item.path}
                     onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                      isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                    }`}
+                    className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      } ${item.roles && !item.roles.includes(role) ? "hidden" : ""}`}
                   >
                     <item.icon className="w-4 h-4" />
                     {item.label}

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageSquare, ThumbsUp, Send, User, Pin, Clock, Plus, X, Lock, Eye, ChevronDown, ChevronRight, Trash2, PinIcon, UnlockIcon } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { MessageSquare, Send, User, Pin, Clock, Plus, X, Lock, Eye, ChevronDown, ChevronRight, Trash2, PinIcon, UnlockIcon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import api from "@/lib/api";
 
 const categoryColors = {
   general: "bg-primary/10 text-primary",
@@ -11,7 +11,6 @@ const categoryColors = {
   issue: "bg-destructive/10 text-destructive",
   announcement: "bg-accent/30 text-accent-foreground",
 };
-
 const categoryIcons = { general: "💬", suggestion: "💡", issue: "⚠️", announcement: "📢" };
 
 const timeAgo = (ts) => {
@@ -26,7 +25,7 @@ const timeAgo = (ts) => {
 
 // ─── New Post Modal ───────────────────────────────────────────────
 const NewPostModal = ({ onClose, onCreated }) => {
-  const { user, hostel, isBlocked } = useAuth();
+  const { hostel, isBlocked } = useAuth();
   const [form, setForm] = useState({ title: "", content: "", category: "general" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -38,13 +37,14 @@ const NewPostModal = ({ onClose, onCreated }) => {
     if (isBlocked) { setError("You are blocked from posting."); return; }
     if (!hostel) { setError("No hostel assigned to your account."); return; }
     setLoading(true); setError("");
-    const { error } = await supabase.from("forum_posts").insert({
-      title: form.title, content: form.content, category: form.category,
-      author_id: user.id, hostel_id: hostel.id,
-    });
+    try {
+      await api.createPost({ title: form.title, content: form.content, category: form.category });
+      onCreated();
+      onClose();
+    } catch (err) {
+      setError(err.message || "Failed to create post.");
+    }
     setLoading(false);
-    if (error) setError(error.message);
-    else { onCreated(); onClose(); }
   };
 
   return (
@@ -70,7 +70,7 @@ const NewPostModal = ({ onClose, onCreated }) => {
           <div>
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Title</label>
             <input value={form.title} onChange={set("title")} required maxLength={200}
-              placeholder="What's your post about?" 
+              placeholder="What's your post about?"
               className="mt-1.5 w-full px-4 py-2.5 rounded-xl bg-muted border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30" />
             <p className="text-right text-[10px] text-muted-foreground mt-1">{form.title.length}/200</p>
           </div>
@@ -96,9 +96,8 @@ const NewPostModal = ({ onClose, onCreated }) => {
 };
 
 // ─── Comment ─────────────────────────────────────────────────────
-const Comment = ({ comment, profiles, onReply, postLocked, user, isMHMC, onDelete, depth = 0 }) => {
+const Comment = ({ comment, onReply, postLocked, user, isMHMC, onDelete, depth = 0 }) => {
   const [showReplies, setShowReplies] = useState(true);
-  const author = profiles[comment.author_id];
 
   return (
     <div className={`${depth > 0 ? "ml-8 border-l-2 border-border pl-4" : ""}`}>
@@ -109,17 +108,17 @@ const Comment = ({ comment, profiles, onReply, postLocked, user, isMHMC, onDelet
               <User className="w-3.5 h-3.5 text-primary-foreground" />
             </div>
             <div>
-              <span className="text-sm font-semibold text-foreground">{author?.full_name || "Student"}</span>
+              <span className="text-sm font-semibold text-foreground">{comment.author_name || "Student"}</span>
               {comment.is_edited && <span className="text-[10px] text-muted-foreground ml-1">(edited)</span>}
               <p className="text-[10px] text-muted-foreground">{timeAgo(comment.created_at)}</p>
             </div>
           </div>
           <div className="flex items-center gap-1">
             {!postLocked && depth < 3 && (
-              <button onClick={() => onReply(comment.id)} className="text-[11px] text-primary hover:underline px-2 py-1">Reply</button>
+              <button onClick={() => onReply(comment._id)} className="text-[11px] text-primary hover:underline px-2 py-1">Reply</button>
             )}
-            {(user?.id === comment.author_id || isMHMC) && (
-              <button onClick={() => onDelete(comment.id)} className="p-1 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+            {(user?.id === comment.author_id?.toString() || isMHMC) && (
+              <button onClick={() => onDelete(comment._id)} className="p-1 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             )}
@@ -134,7 +133,7 @@ const Comment = ({ comment, profiles, onReply, postLocked, user, isMHMC, onDelet
             {comment.replies.length} {comment.replies.length === 1 ? "reply" : "replies"}
           </button>
           {showReplies && comment.replies.map((r) => (
-            <Comment key={r.id} comment={r} profiles={profiles} onReply={onReply} postLocked={postLocked} user={user} isMHMC={isMHMC} onDelete={onDelete} depth={depth + 1} />
+            <Comment key={r._id} comment={r} onReply={onReply} postLocked={postLocked} user={user} isMHMC={isMHMC} onDelete={onDelete} depth={depth + 1} />
           ))}
         </div>
       )}
@@ -147,7 +146,6 @@ const PostDetail = ({ postId, onBack }) => {
   const { user, isMHMC } = useAuth();
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
-  const [profiles, setProfiles] = useState({});
   const [newComment, setNewComment] = useState("");
   const [replyTo, setReplyTo] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -156,67 +154,46 @@ const PostDetail = ({ postId, onBack }) => {
 
   const fetchAll = async () => {
     setLoading(true);
-    const [{ data: postData }, { data: commentsData }] = await Promise.all([
-      supabase.from("forum_posts").select("*").eq("id", postId).single(),
-      supabase.from("forum_comments").select("*").eq("post_id", postId).is("parent_comment_id", null).order("created_at", { ascending: true }),
-    ]);
-
-    // Increment views
-    if (postData) {
-      supabase.from("forum_posts").update({ views_count: (postData.views_count || 0) + 1 }).eq("id", postId).then(() => {});
-      setPost({ ...postData, views_count: (postData.views_count || 0) + 1 });
-    }
-
-    // Fetch replies for each comment
-    if (commentsData) {
-      const repliesData = await Promise.all(
-        commentsData.map((c) => supabase.from("forum_comments").select("*").eq("parent_comment_id", c.id).order("created_at", { ascending: true }))
-      );
-      const withReplies = commentsData.map((c, i) => ({ ...c, replies: repliesData[i].data || [] }));
-      setComments(withReplies);
-
-      // Gather all author IDs
-      const authorIds = new Set([postData?.author_id, ...commentsData.map((c) => c.author_id), ...repliesData.flatMap((r) => (r.data || []).map((rc) => rc.author_id))]);
-      const { data: profilesData } = await supabase.from("profiles").select("user_id, full_name").in("user_id", [...authorIds].filter(Boolean));
-      const profileMap = {};
-      profilesData?.forEach((p) => (profileMap[p.user_id] = p));
-      setProfiles(profileMap);
-    }
+    try {
+      const data = await api.getPost(postId);
+      setPost(data.post);
+      setComments(data.comments || []);
+    } catch { }
     setLoading(false);
   };
 
   const handleAddComment = async (e) => {
     e.preventDefault();
     if (!newComment.trim()) return;
-    const { error } = await supabase.from("forum_comments").insert({ post_id: postId, content: newComment, author_id: user.id, parent_comment_id: replyTo || null });
-    if (!error) { setNewComment(""); setReplyTo(null); fetchAll(); }
+    try {
+      await api.addComment(postId, { content: newComment, parent_comment_id: replyTo || null });
+      setNewComment(""); setReplyTo(null); fetchAll();
+    } catch { }
   };
 
   const handleDeleteComment = async (commentId) => {
-    await supabase.from("forum_comments").delete().eq("id", commentId);
+    await api.deleteComment(commentId);
     fetchAll();
   };
 
   const handleTogglePin = async () => {
-    await supabase.from("forum_posts").update({ is_pinned: !post.is_pinned }).eq("id", postId);
+    await api.updatePost(postId, { is_pinned: !post.is_pinned });
     setPost((p) => ({ ...p, is_pinned: !p.is_pinned }));
   };
 
   const handleToggleLock = async () => {
-    await supabase.from("forum_posts").update({ is_locked: !post.is_locked }).eq("id", postId);
+    await api.updatePost(postId, { is_locked: !post.is_locked });
     setPost((p) => ({ ...p, is_locked: !p.is_locked }));
   };
 
   const handleDeletePost = async () => {
     if (!confirm("Delete this post?")) return;
-    await supabase.from("forum_posts").delete().eq("id", postId);
+    await api.deletePost(postId);
     onBack();
   };
 
   if (loading) return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
   if (!post) return <div className="text-center py-20 text-muted-foreground">Post not found</div>;
-
-  const author = profiles[post.author_id];
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -232,7 +209,7 @@ const PostDetail = ({ postId, onBack }) => {
               <User className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-foreground">{author?.full_name || "Student"}</p>
+              <p className="text-sm font-semibold text-foreground">{post.author_name || "Student"}</p>
               <p className="text-xs text-muted-foreground">{timeAgo(post.created_at)}</p>
             </div>
           </div>
@@ -251,7 +228,7 @@ const PostDetail = ({ postId, onBack }) => {
               </button>
             </div>
           )}
-          {!isMHMC && user?.id === post.author_id && (
+          {!isMHMC && user?.id === post.author_id?.toString() && (
             <button onClick={handleDeletePost} className="p-2 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
               <Trash2 className="w-4 h-4" />
             </button>
@@ -309,7 +286,7 @@ const PostDetail = ({ postId, onBack }) => {
             <p className="text-center text-sm text-muted-foreground py-8">No comments yet. Be the first to comment!</p>
           )}
           {comments.map((c) => (
-            <Comment key={c.id} comment={c} profiles={profiles} onReply={setReplyTo} postLocked={post.is_locked}
+            <Comment key={c._id} comment={c} onReply={setReplyTo} postLocked={post.is_locked}
               user={user} isMHMC={isMHMC} onDelete={handleDeleteComment} />
           ))}
         </div>
@@ -323,7 +300,6 @@ const ForumPage = () => {
   const { user, isMHMC, hostel, isBlocked } = useAuth();
   const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
-  const [profiles, setProfiles] = useState({});
   const [filter, setFilter] = useState("All");
   const [sortBy, setSortBy] = useState("recent");
   const [loading, setLoading] = useState(true);
@@ -337,20 +313,13 @@ const ForumPage = () => {
 
   const fetchPosts = async () => {
     setLoading(true);
-    let query = supabase.from("forum_posts").select("*");
-    if (filter !== "All") query = query.eq("category", filter.toLowerCase());
-    if (sortBy === "recent") query = query.order("created_at", { ascending: false });
-    else if (sortBy === "popular") query = query.order("views_count", { ascending: false });
-    
-    const { data } = await query;
-    const sorted = (data || []).sort((a, b) => (b.is_pinned ? 1 : 0) - (a.is_pinned ? 1 : 0));
-    setPosts(sorted);
-
-    if (sorted.length > 0) {
-      const { data: profilesData } = await supabase.from("profiles").select("user_id, full_name").in("user_id", [...new Set(sorted.map((p) => p.author_id))]);
-      const pm = {}; profilesData?.forEach((p) => (pm[p.user_id] = p));
-      setProfiles(pm);
-    }
+    try {
+      const params = {};
+      if (filter !== "All") params.category = filter.toLowerCase();
+      if (sortBy === "popular") params.sort = "popular";
+      const data = await api.getPosts(params);
+      setPosts(data || []);
+    } catch { }
     setLoading(false);
   };
 
@@ -389,9 +358,8 @@ const ForumPage = () => {
           <div className="flex flex-wrap gap-2 flex-1">
             {["All", "General", "Suggestion", "Issue", "Announcement"].map((cat) => (
               <button key={cat} onClick={() => setFilter(cat)}
-                className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${
-                  filter === cat ? "bg-gradient-warm text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
-                }`}>
+                className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${filter === cat ? "bg-gradient-warm text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
+                  }`}>
                 {categoryIcons[cat.toLowerCase()] || "🔍"} {cat}
               </button>
             ))}
@@ -416,8 +384,8 @@ const ForumPage = () => {
         ) : (
           <div className="space-y-3">
             {posts.map((post, i) => (
-              <motion.div key={post.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                onClick={() => setSelectedPostId(post.id)}
+              <motion.div key={post._id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+                onClick={() => setSelectedPostId(post._id)}
                 className={`bg-card rounded-2xl p-5 shadow-card border transition-shadow cursor-pointer hover:shadow-elevated ${post.is_pinned ? "border-primary/30 bg-primary/5" : "border-border"}`}>
                 <div className="flex items-start gap-3">
                   <div className="w-9 h-9 rounded-full bg-gradient-warm flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -434,7 +402,7 @@ const ForumPage = () => {
                     <h3 className="font-semibold text-foreground text-sm mb-1 truncate">{post.title}</h3>
                     <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{post.content}</p>
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <span>{profiles[post.author_id]?.full_name || "Student"}</span>
+                      <span>{post.author_name || "Student"}</span>
                       <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{timeAgo(post.created_at)}</span>
                       <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{post.views_count}</span>
                     </div>

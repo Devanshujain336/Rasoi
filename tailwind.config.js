@@ -13,8 +13,8 @@ export default {
         },
         extend: {
             fontFamily: {
-                sans: ['Inter', 'sans-serif'],
-                display: ['Playfair Display', 'serif'],
+                sans: ['Nunito', 'sans-serif'],
+                display: ['Fredoka', 'sans-serif'],
             },
             colors: {
                 border: "hsl(var(--border))",

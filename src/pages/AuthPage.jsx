@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { UtensilsCrossed, Mail, Lock, User, Eye, EyeOff, ArrowRight, AlertCircle, Building2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import api from "@/lib/api";
 
 const InputField = ({ icon: Icon, type = "text", placeholder, value, onChange, right, required = true, disabled = false }) => (
   <div className="relative">
@@ -30,6 +31,7 @@ const AuthPage = () => {
   const [hostelInfo, setHostelInfo] = useState(null);
   const [validatingEmail, setValidatingEmail] = useState(false);
   const navigate = useNavigate();
+  const { signIn, signUp } = useAuth();
 
   const [form, setForm] = useState({ email: "", password: "", fullName: "", rollNumber: "", confirmPassword: "" });
   const set = (k) => (e) => {
@@ -45,10 +47,7 @@ const AuthPage = () => {
     setValidatingEmail(true);
     setError("");
     try {
-      const { data, error: fnError } = await supabase.functions.invoke("validate-email", {
-        body: { email: form.email.trim() },
-      });
-      if (fnError) throw fnError;
+      const data = await api.validateEmail(form.email.trim());
       if (data.allowed) {
         setEmailValidated(true);
         setHostelInfo(data.hostel);
@@ -56,7 +55,7 @@ const AuthPage = () => {
         setError(data.error || "Email not approved.");
       }
     } catch (err) {
-      setError("Could not validate email. Try again.");
+      setError(err.message || "Could not validate email. Try again.");
     }
     setValidatingEmail(false);
   };
@@ -64,10 +63,13 @@ const AuthPage = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError(""); setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email: form.email, password: form.password });
+    try {
+      await signIn(form.email, form.password);
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err.message || "Invalid email or password.");
+    }
     setLoading(false);
-    if (error) setError(error.message);
-    else navigate("/dashboard");
   };
 
   const handleSignup = async (e) => {
@@ -77,51 +79,47 @@ const AuthPage = () => {
     if (form.password !== form.confirmPassword) return setError("Passwords do not match.");
     if (form.password.length < 6) return setError("Password must be at least 6 characters.");
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-      options: { data: { full_name: form.fullName, roll_number: form.rollNumber }, emailRedirectTo: window.location.origin },
-    });
+    try {
+      await signUp({ email: form.email, password: form.password, full_name: form.fullName, roll_number: form.rollNumber });
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err.message || "Could not create account.");
+    }
     setLoading(false);
-    if (error) setError(error.message);
-    else { setSuccess("Account created! Please check your email to verify your account."); setMode("login"); }
   };
 
-  const handleForgot = async (e) => {
+  const handleForgot = (e) => {
     e.preventDefault();
-    setError(""); setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(form.email, { redirectTo: `${window.location.origin}/reset-password` });
-    setLoading(false);
-    if (error) setError(error.message);
-    else setSuccess("Password reset link sent! Check your email.");
+    setSuccess("Please contact your hostel admin to reset your password.");
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
+    <div className="min-h-screen bg-[#FFF8F0] flex items-center justify-center p-4 relative overflow-hidden pt-20">
+      {/* Abstract background blobs */}
+      <div className="absolute top-[-10%] right-[-5%] w-[400px] h-[400px] bg-primary/20 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-accent/20 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
+
+      <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} className="w-full max-w-md relative z-10">
 
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-warm flex items-center justify-center mx-auto mb-3 shadow-warm">
-            <UtensilsCrossed className="w-7 h-7 text-primary-foreground" />
-          </div>
-          <h1 className="font-display text-3xl font-bold text-foreground">
-            Mess<span className="text-gradient-warm">Hub</span>
+          <div className="text-6xl mb-4 rotate-12 inline-block drop-shadow-md">👨‍🍳</div>
+          <h1 className="font-display text-4xl font-black text-foreground">
+            Rasoi
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">Student Mess Management System</p>
+          <p className="text-muted-foreground font-medium mt-1">A step towards Ghar ka khana</p>
         </div>
 
         {/* Card */}
-        <div className="bg-card rounded-2xl shadow-card border border-border overflow-hidden">
+        <div className="bg-white rounded-[2rem] shadow-elevated border-2 border-border overflow-hidden">
           {/* Tabs */}
           <div className="flex border-b border-border">
             {["login", "signup"].map((m) => (
               <button
                 key={m}
                 onClick={() => { setMode(m); setError(""); setSuccess(""); setEmailValidated(false); setHostelInfo(null); }}
-                className={`flex-1 py-4 text-sm font-semibold capitalize transition-colors relative ${
-                  mode === m ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                }`}
+                className={`flex-1 py-4 text-sm font-semibold capitalize transition-colors relative ${mode === m ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                  }`}
               >
                 {m === "login" ? "Sign In" : "Create Account"}
                 {mode === m && (
@@ -175,7 +173,6 @@ const AuthPage = () => {
             {/* SIGNUP */}
             {mode === "signup" && (
               <form onSubmit={handleSignup} className="space-y-4">
-                {/* Step 1: Email validation */}
                 <div className="space-y-2">
                   <InputField icon={Mail} type="email" placeholder="Enter your approved email" value={form.email} onChange={set("email")} />
                   {!emailValidated && (
@@ -193,7 +190,6 @@ const AuthPage = () => {
                   )}
                 </div>
 
-                {/* Step 2: Rest of form (only after email validated) */}
                 {emailValidated && (
                   <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-4">
                     <InputField icon={User} placeholder="Full Name" value={form.fullName} onChange={set("fullName")} />
@@ -224,11 +220,10 @@ const AuthPage = () => {
             {/* FORGOT */}
             {mode === "forgot" && (
               <form onSubmit={handleForgot} className="space-y-4">
-                <p className="text-sm text-muted-foreground">Enter your email and we'll send a reset link.</p>
-                <InputField icon={Mail} type="email" placeholder="Email address" value={form.email} onChange={set("email")} />
-                <button type="submit" disabled={loading}
-                  className="w-full py-3 rounded-xl bg-gradient-warm text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 shadow-warm hover:scale-[1.01] transition-all disabled:opacity-60">
-                  {loading ? "Sending..." : "Send Reset Link"}
+                <p className="text-sm text-muted-foreground">Contact your hostel admin to reset your password.</p>
+                <button type="submit"
+                  className="w-full py-3 rounded-xl bg-gradient-warm text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 shadow-warm hover:scale-[1.01] transition-all">
+                  OK, Got it
                 </button>
                 <button type="button" onClick={() => setMode("login")} className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors">
                   ← Back to sign in

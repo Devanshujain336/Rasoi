@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, X, Megaphone, Check, Send } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Bell, X, Megaphone, Send } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import api from "@/lib/api";
+
+const POLL_INTERVAL_MS = 15000;
 
 const timeAgo = (ts) => {
   const diff = Date.now() - new Date(ts).getTime();
@@ -22,62 +24,56 @@ const NotificationBell = () => {
   const [showBroadcast, setShowBroadcast] = useState(false);
   const [broadcastForm, setBroadcastForm] = useState({ title: "", message: "" });
   const [sending, setSending] = useState(false);
+  const pollRef = useRef(null);
 
-  const unreadCount = notifications.filter((n) => !readIds.has(n.id)).length;
+  const unreadCount = notifications.filter((n) => !readIds.has(n._id)).length;
+
+  const fetchNotifications = async () => {
+    if (!user || !hostel) return;
+    try {
+      const { notifications: notifs, readIds: rIds } = await api.getNotifications();
+      setNotifications(notifs || []);
+      setReadIds(new Set(rIds || []));
+    } catch {
+      // Silently fail on polling errors
+    }
+  };
 
   useEffect(() => {
     if (!user || !hostel) return;
     fetchNotifications();
-
-    // Realtime subscription
-    const channel = supabase
-      .channel("notifications-realtime")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `hostel_id=eq.${hostel.id}` }, (payload) => {
-        setNotifications((prev) => [payload.new, ...prev]);
-      })
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
+    pollRef.current = setInterval(fetchNotifications, POLL_INTERVAL_MS);
+    return () => clearInterval(pollRef.current);
   }, [user, hostel]);
-
-  const fetchNotifications = async () => {
-    if (!hostel) return;
-    const [{ data: notifs }, { data: reads }] = await Promise.all([
-      supabase.from("notifications").select("*").eq("hostel_id", hostel.id).order("created_at", { ascending: false }).limit(50),
-      supabase.from("notification_reads").select("notification_id").eq("user_id", user.id),
-    ]);
-    setNotifications(notifs || []);
-    setReadIds(new Set((reads || []).map((r) => r.notification_id)));
-  };
 
   const markAsRead = async (notifId) => {
     if (readIds.has(notifId)) return;
-    await supabase.from("notification_reads").insert({ notification_id: notifId, user_id: user.id });
-    setReadIds((prev) => new Set([...prev, notifId]));
+    try {
+      await api.markRead([notifId]);
+      setReadIds((prev) => new Set([...prev, notifId]));
+    } catch { }
   };
 
   const markAllRead = async () => {
-    const unread = notifications.filter((n) => !readIds.has(n.id));
+    const unread = notifications.filter((n) => !readIds.has(n._id)).map((n) => n._id);
     if (unread.length === 0) return;
-    const rows = unread.map((n) => ({ notification_id: n.id, user_id: user.id }));
-    await supabase.from("notification_reads").upsert(rows, { onConflict: "notification_id,user_id" });
-    setReadIds(new Set(notifications.map((n) => n.id)));
+    try {
+      await api.markRead(unread);
+      setReadIds(new Set(notifications.map((n) => n._id)));
+    } catch { }
   };
 
   const handleBroadcast = async (e) => {
     e.preventDefault();
     if (!broadcastForm.title.trim() || !broadcastForm.message.trim()) return;
     setSending(true);
-    await supabase.from("notifications").insert({
-      hostel_id: hostel.id,
-      title: broadcastForm.title,
-      message: broadcastForm.message,
-      sent_by: user.id,
-    });
+    try {
+      await api.broadcastNotification({ title: broadcastForm.title, message: broadcastForm.message });
+      setBroadcastForm({ title: "", message: "" });
+      setShowBroadcast(false);
+      fetchNotifications();
+    } catch { }
     setSending(false);
-    setBroadcastForm({ title: "", message: "" });
-    setShowBroadcast(false);
-    fetchNotifications();
   };
 
   if (!user || !hostel) return null;
@@ -120,11 +116,11 @@ const NotificationBell = () => {
                 <div className="py-10 text-center text-sm text-muted-foreground">No notifications yet</div>
               ) : (
                 notifications.map((n) => {
-                  const isRead = readIds.has(n.id);
+                  const isRead = readIds.has(n._id);
                   return (
                     <div
-                      key={n.id}
-                      onClick={() => markAsRead(n.id)}
+                      key={n._id}
+                      onClick={() => markAsRead(n._id)}
                       className={`px-4 py-3 border-b border-border last:border-0 cursor-pointer transition-colors ${isRead ? "bg-card" : "bg-primary/5"}`}
                     >
                       <div className="flex items-start justify-between gap-2">
