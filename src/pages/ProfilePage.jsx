@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { User, Mail, Phone, Hash, Home, Save, AlertCircle, CheckCircle2, Shield } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import api from "@/lib/api";
 
 const ProfilePage = () => {
   const { user, profile, role, refetchProfile } = useAuth();
@@ -21,13 +21,15 @@ const ProfilePage = () => {
   const handleSave = async (e) => {
     e.preventDefault();
     setError(""); setLoading(true); setSuccess(false);
-    const { error } = await supabase
-      .from("profiles")
-      .update({ full_name: form.full_name, roll_number: form.roll_number, room_number: form.room_number, phone: form.phone })
-      .eq("user_id", user.id);
+    try {
+      await api.updateProfile(user.id, form);
+      setSuccess(true);
+      refetchProfile();
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err) {
+      setError(err.message || "Failed to update profile.");
+    }
     setLoading(false);
-    if (error) setError(error.message);
-    else { setSuccess(true); refetchProfile(); setTimeout(() => setSuccess(false), 3000); }
   };
 
   const roleColors = { student: "bg-primary/10 text-primary", mhmc: "bg-secondary/10 text-secondary", admin: "bg-destructive/10 text-destructive" };
@@ -39,11 +41,10 @@ const ProfilePage = () => {
         <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <input
           type="text" value={value} onChange={onChange} placeholder={placeholder} readOnly={readOnly}
-          className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm transition-all focus:outline-none ${
-            readOnly
+          className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm transition-all focus:outline-none ${readOnly
               ? "bg-muted text-muted-foreground border-border cursor-not-allowed"
               : "bg-background border-border text-foreground focus:ring-2 focus:ring-primary/30"
-          }`}
+            }`}
         />
       </div>
     </div>
@@ -114,13 +115,13 @@ const ProfilePage = () => {
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Member since</span>
-              <span className="text-foreground font-medium">{new Date(user?.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</span>
+              <span className="text-foreground font-medium">
+                {user?.created_at ? new Date(user.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : "—"}
+              </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Email verified</span>
-              <span className={`font-medium ${user?.email_confirmed_at ? "text-secondary" : "text-destructive"}`}>
-                {user?.email_confirmed_at ? "✓ Verified" : "Not verified"}
-              </span>
+              <span className="text-muted-foreground">Hostel</span>
+              <span className="text-foreground font-medium">{profile?.hostel_id?.name || "Not assigned"}</span>
             </div>
           </div>
         </motion.div>

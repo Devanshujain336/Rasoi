@@ -1,12 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
-
 @layer base {
   :root {
-    --background: 40 33% 97%;
+    --background: 35 100% 98%;
     --foreground: 20 20% 12%;
 
     --card: 0 0% 100%;
@@ -15,49 +14,49 @@
     --popover: 0 0% 100%;
     --popover-foreground: 20 20% 12%;
 
-    --primary: 28 85% 52%;
+    --primary: 14 100% 57%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 152 45% 38%;
+    --secondary: 122 39% 49%;
     --secondary-foreground: 0 0% 100%;
 
     --muted: 35 25% 92%;
     --muted-foreground: 20 10% 45%;
 
-    --accent: 42 95% 55%;
+    --accent: 45 100% 51%;
     --accent-foreground: 20 20% 12%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 35 20% 88%;
     --input: 35 20% 88%;
-    --ring: 28 85% 52%;
+    --ring: 14 100% 57%;
 
-    --radius: 0.75rem;
+    --radius: 1.5rem;
 
     --sidebar-background: 20 20% 12%;
     --sidebar-foreground: 40 33% 97%;
-    --sidebar-primary: 28 85% 52%;
+    --sidebar-primary: 14 100% 57%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 20 18% 18%;
     --sidebar-accent-foreground: 40 33% 97%;
     --sidebar-border: 20 15% 20%;
-    --sidebar-ring: 28 85% 52%;
+    --sidebar-ring: 14 100% 57%;
 
     /* Custom tokens */
-    --golden: 42 95% 55%;
+    --golden: 45 100% 51%;
     --golden-foreground: 20 20% 12%;
-    --emerald: 152 45% 38%;
+    --emerald: 122 39% 49%;
     --emerald-foreground: 0 0% 100%;
-    --warm-bg: 30 30% 95%;
+    --warm-bg: 35 100% 98%;
     --warm-bg-dark: 20 20% 12%;
-    --gradient-warm: linear-gradient(135deg, hsl(28 85% 52%), hsl(42 95% 55%));
-    --gradient-emerald: linear-gradient(135deg, hsl(152 45% 38%), hsl(160 50% 45%));
+    --gradient-warm: linear-gradient(135deg, hsl(14 100% 57%), hsl(45 100% 51%));
+    --gradient-emerald: linear-gradient(135deg, hsl(122 39% 49%), hsl(140 40% 45%));
     --gradient-dark: linear-gradient(135deg, hsl(20 20% 12%), hsl(20 18% 18%));
-    --shadow-warm: 0 10px 40px -10px hsl(28 85% 52% / 0.3);
-    --shadow-card: 0 4px 20px -4px hsl(20 20% 12% / 0.08);
-    --shadow-elevated: 0 20px 60px -15px hsl(20 20% 12% / 0.15);
+    --shadow-warm: 0 20px 40px -10px hsl(14 100% 57% / 0.25);
+    --shadow-card: 0 10px 30px -5px hsl(20 20% 12% / 0.05);
+    --shadow-elevated: 0 25px 50px -12px hsl(20 20% 12% / 0.15);
   }
 
   .dark {
@@ -98,35 +97,40 @@
 
   body {
     @apply bg-background text-foreground font-sans;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Nunito', sans-serif;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Playfair Display', serif;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: 'Fredoka', sans-serif;
   }
 }
 
 @layer utilities {
   .text-gradient-warm {
-    background: linear-gradient(135deg, hsl(28 85% 52%), hsl(42 95% 55%));
+    background: linear-gradient(135deg, hsl(14 100% 57%), hsl(45 100% 51%));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .text-gradient-emerald {
-    background: linear-gradient(135deg, hsl(152 45% 38%), hsl(160 50% 45%));
+    background: linear-gradient(135deg, hsl(122 39% 49%), hsl(140 40% 45%));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .bg-gradient-warm {
-    background: linear-gradient(135deg, hsl(28 85% 52%), hsl(42 95% 55%));
+    background: linear-gradient(135deg, hsl(14 100% 57%), hsl(45 100% 51%));
   }
 
   .bg-gradient-emerald {
-    background: linear-gradient(135deg, hsl(152 45% 38%), hsl(160 50% 45%));
+    background: linear-gradient(135deg, hsl(122 39% 49%), hsl(140 40% 45%));
   }
 
   .bg-gradient-dark {
@@ -134,15 +138,15 @@
   }
 
   .shadow-warm {
-    box-shadow: 0 10px 40px -10px hsl(28 85% 52% / 0.3);
+    box-shadow: 0 20px 40px -10px hsl(14 100% 57% / 0.25);
   }
 
   .shadow-card {
-    box-shadow: 0 4px 20px -4px hsl(20 20% 12% / 0.08);
+    box-shadow: 0 10px 30px -5px hsl(20 20% 12% / 0.05);
   }
 
   .shadow-elevated {
-    box-shadow: 0 20px 60px -15px hsl(20 20% 12% / 0.15);
+    box-shadow: 0 25px 50px -12px hsl(20 20% 12% / 0.15);
   }
 
   .glass {
