@@ -1,3 +1,11 @@
+/**
+ * NotFound.jsx
+ * 
+ * @description React Page Component: NotFound.
+ * @usage Rendered by react-router-dom as a full-page view.
+ * @details Often contains state management, useEffect hooks for fetching initial data, and renders multiple smaller components.
+ */
+
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 const NotFound = () => {

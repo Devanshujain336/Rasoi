@@ -1,3 +1,11 @@
+/**
+ * profiles.js
+ * 
+ * @description Express Router for Profiles endpoints.
+ * @usage Mount inside the main server/index.js file (e.g., app.use('/api/profiles', router)).
+ * @details Handles incoming HTTP requests, performs business logic using models, handles errors, and returns JSON responses. Routes are often protected via auth middleware.
+ */
+
 import express from "express";
 import Profile from "../models/Profile.js";
 import { protect } from "../middleware/auth.js";

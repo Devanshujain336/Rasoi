@@ -1,3 +1,11 @@
+/**
+ * ActivePolls.jsx
+ * 
+ * @description Feature-specific React Component.
+ * @usage Used within pages to break down complex UI into smaller, manageable chunks.
+ * @details Might contain some local state relevant to the component but often relies on props passed down from the parent page.
+ */
+
 import { motion } from "framer-motion";
 import { ThumbsUp, Clock, CheckCircle, TrendingUp } from "lucide-react";
 
@@ -17,7 +25,7 @@ const ActivePolls = ({ polls, onVote, currentUserId }) => {
 
           return (
             <motion.div
-              key={poll.id}
+              key={poll._id || poll.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.08 }}
@@ -58,7 +66,7 @@ const ActivePolls = ({ polls, onVote, currentUserId }) => {
                   </span>
                 ) : (
                   <button
-                    onClick={() => onVote(poll.id)}
+                    onClick={() => onVote(poll._id || poll.id)}
                     className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"
                   >
                     <ThumbsUp className="w-3 h-3" /> Vote

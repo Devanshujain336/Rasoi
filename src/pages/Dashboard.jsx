@@ -1,3 +1,11 @@
+/**
+ * Dashboard.jsx
+ * 
+ * @description React Page Component: Dashboard.
+ * @usage Rendered by react-router-dom as a full-page view.
+ * @details Often contains state management, useEffect hooks for fetching initial data, and renders multiple smaller components.
+ */
+
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -16,7 +24,7 @@ const FloatingFeedbackButton = () => (
   <motion.button
     whileHover={{ scale: 1.1, rotate: 10 }}
     whileTap={{ scale: 0.9 }}
-    className="fixed bottom-6 right-6 w-16 h-16 bg-gradient-warm rounded-full shadow-warm flex items-center justify-center text-3xl z-50 border-4 border-white"
+    className="fixed md:bottom-6 bottom-[85px] right-6 w-16 h-16 bg-gradient-warm rounded-full shadow-warm flex items-center justify-center text-3xl z-50 border-4 border-white"
   >
     💬
   </motion.button>
@@ -204,7 +212,7 @@ const Dashboard = () => {
 
   if (role === "munimji") {
     return (
-      <div className="min-h-screen pt-20 pb-12 bg-[#FFF8F0]">
+      <div className="min-h-screen pt-20 md:pb-12 pb-[85px] bg-[#FFF8F0]">
         <div className="container mx-auto px-4 max-w-4xl">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
             <h1 className="font-display text-5xl font-black text-foreground">MunimJi Panel 📋</h1>
@@ -235,7 +243,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen pt-24 pb-20 bg-[#FFF8F0]">
+    <div className="min-h-screen pt-20 md:pb-20 pb-[85px] bg-[#FFF8F0]">
       <div className="container mx-auto px-4">
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-10 text-center lg:text-left flex flex-col lg:flex-row lg:items-end justify-between gap-4">

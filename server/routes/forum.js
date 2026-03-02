@@ -1,3 +1,11 @@
+/**
+ * forum.js
+ * 
+ * @description Express Router for Forum endpoints.
+ * @usage Mount inside the main server/index.js file (e.g., app.use('/api/forum', router)).
+ * @details Handles incoming HTTP requests, performs business logic using models, handles errors, and returns JSON responses. Routes are often protected via auth middleware.
+ */
+
 import express from "express";
 import ForumPost from "../models/ForumPost.js";
 import ForumComment from "../models/ForumComment.js";

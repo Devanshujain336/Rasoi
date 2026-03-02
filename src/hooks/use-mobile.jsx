@@ -1,3 +1,10 @@
+/**
+ * use-mobile.jsx
+ * 
+ * @description General Javascript/React File.
+ * @usage Used as a module within the application.
+ */
+
 import * as React from "react";
 const MOBILE_BREAKPOINT = 768;
 export function useIsMobile() {

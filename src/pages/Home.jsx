@@ -1,3 +1,11 @@
+/**
+ * Home.jsx
+ * 
+ * @description React Page Component: Home.
+ * @usage Rendered by react-router-dom as a full-page view.
+ * @details Often contains state management, useEffect hooks for fetching initial data, and renders multiple smaller components.
+ */
+
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {

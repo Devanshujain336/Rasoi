@@ -1,3 +1,11 @@
+/**
+ * MHMCPage.jsx
+ * 
+ * @description React Page Component: MHMCPage.
+ * @usage Rendered by react-router-dom as a full-page view.
+ * @details Often contains state management, useEffect hooks for fetching initial data, and renders multiple smaller components.
+ */
+
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
@@ -347,7 +355,7 @@ const ActivePollsTab = ({ polls, setPolls, pollDetail, setPollDetail, setShowCon
           const isHot = pct >= 70;
           return (
             <motion.div
-              key={poll.id}
+              key={poll._id || poll.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
@@ -430,7 +438,7 @@ const ActivePollsTab = ({ polls, setPolls, pollDetail, setPollDetail, setShowCon
 
               <div className="flex gap-2">
                 <button
-                  onClick={() => handleReject(pollDetail.id)}
+                  onClick={() => handleReject(pollDetail._id || pollDetail.id)}
                   className="flex-1 px-4 py-2.5 rounded-xl bg-destructive/10 text-destructive font-medium text-sm hover:bg-destructive/20 transition-colors"
                 >
                   Reject
@@ -440,7 +448,7 @@ const ActivePollsTab = ({ polls, setPolls, pollDetail, setPollDetail, setShowCon
                 </button>
                 {(pollDetail.votes / pollDetail.totalStudents) * 100 >= 70 && (
                   <button
-                    onClick={() => handleApprove(pollDetail.id)}
+                    onClick={() => handleApprove(pollDetail._id || pollDetail.id)}
                     className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-warm text-primary-foreground font-semibold text-sm hover:scale-[1.02] transition-transform"
                   >
                     <PartyPopper className="w-4 h-4" /> Approve
@@ -478,7 +486,7 @@ const PollHistoryTab = ({ polls }) => {
             };
             return (
               <motion.div
-                key={poll.id}
+                key={poll._id || poll.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}

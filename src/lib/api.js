@@ -1,3 +1,10 @@
+/**
+ * api.js
+ * 
+ * @description Frontend Library / Utility Helper Functions.
+ * @usage Imported where needed for repeated tasks like API fetching wrappers or classname merges (cn).
+ */
+
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 const getToken = () => localStorage.getItem("token");

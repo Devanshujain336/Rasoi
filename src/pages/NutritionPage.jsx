@@ -1,3 +1,11 @@
+/**
+ * NutritionPage.jsx
+ * 
+ * @description React Page Component: NutritionPage.
+ * @usage Rendered by react-router-dom as a full-page view.
+ * @details Often contains state management, useEffect hooks for fetching initial data, and renders multiple smaller components.
+ */
+
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Camera, Scan, Flame, Beef, Wheat, Droplets, Apple, Zap, Heart, Activity } from "lucide-react";
@@ -38,7 +46,7 @@ const NutritionPage = () => {
   const totalMacros = data.macros.protein + data.macros.carbs + data.macros.fat;
 
   return (
-    <div className="min-h-screen pt-20 pb-12 bg-background">
+    <div className="min-h-screen pt-20 md:pb-12 pb-[85px] bg-background">
       <div className="container mx-auto px-4 max-w-3xl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
           <h1 className="font-display text-4xl font-bold text-foreground mb-2">AI Nutrition Scanner</h1>

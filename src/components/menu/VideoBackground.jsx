@@ -1,3 +1,11 @@
+/**
+ * VideoBackground.jsx
+ * 
+ * @description Feature-specific React Component.
+ * @usage Used within pages to break down complex UI into smaller, manageable chunks.
+ * @details Might contain some local state relevant to the component but often relies on props passed down from the parent page.
+ */
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import foodVideo1 from "@/assets/food-bg-video.mp4";
 import foodVideo2 from "@/assets/food-bg-video-2.mp4";

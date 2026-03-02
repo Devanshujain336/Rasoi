@@ -1,3 +1,11 @@
+/**
+ * Profile.js
+ * 
+ * @description Mongoose Data Model for Profile.
+ * @usage Import this model in routes & controllers to interact with the Profile MongoDB collection.
+ * @details Defines schema structure, field validations, and potentially pre/post hooks for database operations.
+ */
+
 import mongoose from "mongoose";
 
 const profileSchema = new mongoose.Schema({

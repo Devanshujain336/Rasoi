@@ -1,3 +1,11 @@
+/**
+ * User.js
+ * 
+ * @description Mongoose Data Model for User.
+ * @usage Import this model in routes & controllers to interact with the User MongoDB collection.
+ * @details Defines schema structure, field validations, and potentially pre/post hooks for database operations.
+ */
+
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";

@@ -1,3 +1,11 @@
+/**
+ * AuthContext.jsx
+ * 
+ * @description React Context Provider.
+ * @usage Wrap around the application or sub-components to provide global state.
+ * @details Contains state variables and updater functions that avoid prop-drilling. Uses React.createContext and useContext.
+ */
+
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import api, { setToken } from "@/lib/api";
 

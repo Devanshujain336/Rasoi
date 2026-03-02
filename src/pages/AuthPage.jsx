@@ -1,3 +1,11 @@
+/**
+ * AuthPage.jsx
+ * 
+ * @description React Page Component: AuthPage.
+ * @usage Rendered by react-router-dom as a full-page view.
+ * @details Often contains state management, useEffect hooks for fetching initial data, and renders multiple smaller components.
+ */
+
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { UtensilsCrossed, Mail, Lock, User, Eye, EyeOff, ArrowRight, AlertCircle, Building2 } from "lucide-react";
