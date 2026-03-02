@@ -177,9 +177,8 @@ const MenuPage = () => {
               <AnimatePresence mode="wait">
                 <motion.div
                   key={selectedDay}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
+                  initial={false}
+                  animate={{ opacity: 1 }}
                   className="space-y-4"
                 >
                   {MEALS.map((meal) => {
