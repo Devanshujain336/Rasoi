@@ -1,3 +1,10 @@
+/**
+ * eslint.config.js
+ * 
+ * @description General Javascript/React File.
+ * @usage Used as a module within the application.
+ */
+
 import js from "@eslint/js";
 import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";

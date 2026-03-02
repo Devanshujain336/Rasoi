@@ -1,3 +1,11 @@
+/**
+ * sonner.jsx
+ * 
+ * @description Generic Reusable UI Component (often Shadcn UI).
+ * @usage Import and use throughout the frontend as low-level building blocks (Buttons, Inputs, Dialogs).
+ * @details Styling usually utilizes Tailwind CSS. Avoid putting business logic here.
+ */
+
 import { useTheme } from "next-themes";
 import { Toaster as Sonner, toast } from "sonner";
 const Toaster = ({ ...props }) => {

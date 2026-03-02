@@ -1,3 +1,11 @@
+/**
+ * auth.js
+ * 
+ * @description Express Router for Auth endpoints.
+ * @usage Mount inside the main server/index.js file (e.g., app.use('/api/auth', router)).
+ * @details Handles incoming HTTP requests, performs business logic using models, handles errors, and returns JSON responses. Routes are often protected via auth middleware.
+ */
+
 import express from "express";
 import AllowedEmail from "../models/AllowedEmail.js";
 import User from "../models/User.js";

@@ -1,3 +1,11 @@
+/**
+ * ForumComment.js
+ * 
+ * @description Mongoose Data Model for ForumComment.
+ * @usage Import this model in routes & controllers to interact with the ForumComment MongoDB collection.
+ * @details Defines schema structure, field validations, and potentially pre/post hooks for database operations.
+ */
+
 import mongoose from "mongoose";
 
 const forumCommentSchema = new mongoose.Schema({

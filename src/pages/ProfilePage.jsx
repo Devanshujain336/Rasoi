@@ -1,3 +1,11 @@
+/**
+ * ProfilePage.jsx
+ * 
+ * @description React Page Component: ProfilePage.
+ * @usage Rendered by react-router-dom as a full-page view.
+ * @details Often contains state management, useEffect hooks for fetching initial data, and renders multiple smaller components.
+ */
+
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { User, Mail, Phone, Hash, Home, Save, AlertCircle, CheckCircle2, Shield } from "lucide-react";
@@ -53,7 +61,7 @@ const ProfilePage = () => {
   const roleColors = { student: "bg-primary/10 text-primary", mhmc: "bg-secondary/10 text-secondary", admin: "bg-destructive/10 text-destructive" };
 
   return (
-    <div className="min-h-screen pt-20 pb-12 bg-background">
+    <div className="min-h-screen pt-20 md:pb-12 pb-[85px] bg-background">
       <div className="container mx-auto px-4 max-w-2xl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <h1 className="font-display text-4xl font-bold text-foreground">My Profile</h1>

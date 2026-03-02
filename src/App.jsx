@@ -1,3 +1,11 @@
+/**
+ * App.jsx
+ * 
+ * @description Main React Application Component.
+ * @usage Mounted by the main entry DOM node (index.html -> main.jsx).
+ * @details Typically contains top-level router definitions, context provider wrappers, and global layout components (Navbar/Toast container).
+ */
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";

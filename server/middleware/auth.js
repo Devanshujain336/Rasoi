@@ -1,3 +1,11 @@
+/**
+ * auth.js
+ * 
+ * @description Express Middleware function.
+ * @usage Pass as one of the handler arguments in route definitions (e.g. router.get("/route", middleware, handler)).
+ * @details Interprets incoming request parameters or headers (like JWT tokens) to authenticate users or restrict access.
+ */
+
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 

@@ -1,3 +1,11 @@
+/**
+ * menu.js
+ * 
+ * @description Express Router for Menu endpoints.
+ * @usage Mount inside the main server/index.js file (e.g., app.use('/api/menu', router)).
+ * @details Handles incoming HTTP requests, performs business logic using models, handles errors, and returns JSON responses. Routes are often protected via auth middleware.
+ */
+
 import express from "express";
 import Menu from "../models/Menu.js";
 import Poll from "../models/Poll.js";

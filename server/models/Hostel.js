@@ -1,3 +1,11 @@
+/**
+ * Hostel.js
+ * 
+ * @description Mongoose Data Model for Hostel.
+ * @usage Import this model in routes & controllers to interact with the Hostel MongoDB collection.
+ * @details Defines schema structure, field validations, and potentially pre/post hooks for database operations.
+ */
+
 import mongoose from "mongoose";
 
 const hostelSchema = new mongoose.Schema({

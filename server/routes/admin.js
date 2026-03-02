@@ -1,3 +1,11 @@
+/**
+ * admin.js
+ * 
+ * @description Express Router for Admin endpoints.
+ * @usage Mount inside the main server/index.js file (e.g., app.use('/api/admin', router)).
+ * @details Handles incoming HTTP requests, performs business logic using models, handles errors, and returns JSON responses. Routes are often protected via auth middleware.
+ */
+
 import express from "express";
 import Hostel from "../models/Hostel.js";
 import AllowedEmail from "../models/AllowedEmail.js";

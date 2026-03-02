@@ -1,3 +1,11 @@
+/**
+ * Rating.js
+ * 
+ * @description Mongoose Data Model for Rating.
+ * @usage Import this model in routes & controllers to interact with the Rating MongoDB collection.
+ * @details Defines schema structure, field validations, and potentially pre/post hooks for database operations.
+ */
+
 import mongoose from "mongoose";
 
 const ratingSchema = new mongoose.Schema({

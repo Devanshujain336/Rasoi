@@ -1,3 +1,11 @@
+/**
+ * MenuCard.jsx
+ * 
+ * @description Feature-specific React Component.
+ * @usage Used within pages to break down complex UI into smaller, manageable chunks.
+ * @details Might contain some local state relevant to the component but often relies on props passed down from the parent page.
+ */
+
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, ThumbsUp, Clock, CheckCircle, Vote } from "lucide-react";
@@ -25,7 +33,7 @@ const MenuCard = ({ day, meal, items, poll, suggestionsLeft, onCreatePoll, onVot
         onClick={() => setExpanded(true)}
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        className="relative cursor-pointer rounded-xl p-4 backdrop-blur-md bg-white/85 dark:bg-black/50 border border-white/20 shadow-card transition-shadow hover:shadow-elevated min-h-[150px]"
+        className="relative cursor-pointer rounded-xl p-4 backdrop-blur-md bg-white/85 dark:bg-black/50 border border-white/20 shadow-card transition-shadow hover:shadow-elevated md:min-h-[150px] min-h-[120px]"
       >
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-semibold uppercase tracking-wider text-primary">{meal}</span>
@@ -120,7 +128,7 @@ const MenuCard = ({ day, meal, items, poll, suggestionsLeft, onCreatePoll, onVot
                     </div>
                   ) : (
                     <button
-                      onClick={() => onVote(poll.id)}
+                      onClick={() => onVote(poll._id || poll.id)}
                       className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-warm text-primary-foreground text-sm font-semibold hover:scale-[1.02] transition-transform"
                     >
                       <ThumbsUp className="w-4 h-4" /> Vote for this suggestion

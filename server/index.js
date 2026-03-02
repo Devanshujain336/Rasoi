@@ -1,3 +1,11 @@
+/**
+ * index.js
+ * 
+ * @description Entry Point for the Express Backend Server.
+ * @usage Run via Node.js to start the HTTP server listening on the defined PORT.
+ * @details Configures global middleware (CORS, Rate Limiter, Body Parser) and mounts all route handlers. Connects to MongoDB.
+ */
+
 import dotenv from "dotenv";
 dotenv.config(); // Reads from root .env (MONGO_URI, JWT_SECRET, PORT, CLIENT_URL)
 
@@ -25,19 +33,6 @@ app.use(helmet());
 app.use(compression());
 app.use(morgan(isProd ? "combined" : "dev"));
 
-// Rate Limiting (Prevent Brute Force)
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per window
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: { error: "Too many requests from this IP, please try again after 15 minutes" }
-});
-app.use("/api/", limiter);
-
-// Connect to MongoDB
-await connectDB();
-
 const allowedOrigins = [
     process.env.CLIENT_URL,
     "http://localhost:5173",
@@ -51,7 +46,10 @@ const allowedOrigins = [
     "http://localhost:8082",
     "http://127.0.0.1:8082",
     "http://localhost:5175",
-    "http://127.0.0.1:5175"
+    "http://127.0.0.1:5175",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8083"
 ].filter(Boolean);
 
 app.use(cors({
@@ -61,6 +59,21 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 app.use(express.json({ limit: "10kb" })); // Body limiter to prevent DOS
+
+// Rate Limiting (Prevent Brute Force)
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 1000, // Increased limit for easier local development
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many requests from this IP, please try again after 15 minutes" }
+});
+app.use("/api/", limiter);
+
+// Connect to MongoDB
+await connectDB();
+
+
 
 // Routes
 app.use("/api/auth", authRoutes);

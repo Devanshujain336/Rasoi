@@ -1,3 +1,10 @@
+/**
+ * vite.config.js
+ * 
+ * @description General Javascript/React File.
+ * @usage Used as a module within the application.
+ */
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";

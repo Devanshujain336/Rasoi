@@ -1,3 +1,11 @@
+/**
+ * db.js
+ * 
+ * @description MongoDB Connection Helper.
+ * @usage Called sequentially before starting the Express server.
+ * @details Utilizes mongoose.connect wrapper with connection retry or error logging logic.
+ */
+
 import mongoose from "mongoose";
 
 const connectDB = async () => {
