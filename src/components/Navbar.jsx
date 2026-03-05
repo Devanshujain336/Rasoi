@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   UtensilsCrossed, LayoutDashboard, Receipt, Vote,
-  ScanLine, MessageSquare, Menu, X, CalendarCheck, CreditCard, IndianRupee,
+  MessageSquare, Menu, X, CalendarCheck, CreditCard, IndianRupee,
   User, LogOut, Settings, ChevronDown, Shield
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,7 +17,6 @@ const navItems = [
   { path: "/rebate", label: "Rebate", icon: Receipt, roles: ["student", "mhmc", "admin", "munimji"] },
   { path: "/billing", label: "Billing", icon: IndianRupee, roles: ["student", "mhmc", "admin"] },
   { path: "/mhmc", label: "MHMC", icon: Vote, roles: ["mhmc", "admin"] },
-  { path: "/nutrition", label: "AI Nutrition", icon: ScanLine, roles: ["student", "mhmc", "admin"] },
   { path: "/forum", label: "Forum", icon: MessageSquare, roles: ["student", "mhmc", "admin"] },
   { path: "/admin", label: "Admin Panel", icon: Shield, roles: ["admin"] },
 ];

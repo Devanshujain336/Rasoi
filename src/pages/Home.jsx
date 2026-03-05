@@ -10,7 +10,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   CalendarCheck, LayoutDashboard, Receipt, Vote,
-  ScanLine, MessageSquare, CreditCard, ArrowRight, Sparkles
+  MessageSquare, CreditCard, ArrowRight, Sparkles
 } from "lucide-react";
 import heroFood from "@/assets/hero-food.jpg";
 import FeatureCard from "@/components/FeatureCard";
@@ -21,7 +21,6 @@ const features = [
   { icon: CreditCard, title: "Extra Items Billing", description: "Digital billing for extras like ice cream, sweets & more. No more paper registers!", gradient: "warm" },
   { icon: Receipt, title: "Online Rebate Filing", description: "File rebates before leave and watch your bill adjust automatically in real-time.", gradient: "emerald" },
   { icon: Vote, title: "MHMC Elections", description: "Nominate, campaign, and vote for your mess committee representatives democratically.", gradient: "warm" },
-  { icon: ScanLine, title: "AI Nutrition Scanner", description: "Snap a photo of your meal and get instant nutritional analysis powered by AI.", gradient: "emerald" },
   { icon: MessageSquare, title: "Community Forum", description: "Discuss, suggest, and collaborate with fellow students to improve mess services.", gradient: "warm" },
 ];
 
