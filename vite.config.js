@@ -28,4 +28,19 @@ export default defineConfig(({ mode }) => ({
             "@": path.resolve(__dirname, "./src"),
         },
     },
+    test: {
+        globals: true,
+        // React component tests use jsdom; server tests override with 'node'
+        environment: "jsdom",
+        setupFiles: ["./src/tests/setup.js"],
+        include: ["src/tests/**/*.test.{js,jsx}", "server/tests/**/*.test.js"],
+        environmentMatchGlobs: [
+            // server-side tests run in Node (no DOM needed)
+            ["server/tests/**", "node"],
+        ],
+        coverage: {
+            provider: "v8",
+            reporter: ["text", "lcov"],
+        },
+    },
 }));

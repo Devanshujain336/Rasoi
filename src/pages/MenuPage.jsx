@@ -7,7 +7,7 @@
  */
 
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import VideoBackground from "@/components/menu/VideoBackground";
 import MenuCard from "@/components/menu/MenuCard";
 import ActivePolls from "@/components/menu/ActivePolls";
@@ -154,8 +154,8 @@ const MenuPage = () => {
                     key={day}
                     onClick={() => setSelectedDay(day)}
                     className={`flex-shrink-0 flex flex-col items-center justify-center w-20 h-24 rounded-2xl transition-all snap-center border-2 ${isSelected
-                        ? "bg-gradient-warm border-white text-white shadow-warm scale-105"
-                        : "bg-white/10 backdrop-blur-md border-white/20 text-white/70 hover:bg-white/20"
+                      ? "bg-gradient-warm border-white text-white shadow-warm scale-105"
+                      : "bg-white/10 backdrop-blur-md border-white/20 text-white/70 hover:bg-white/20"
                       }`}
                   >
                     <span className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-70">
@@ -174,46 +174,45 @@ const MenuPage = () => {
 
             {/* Meal Stack for Selected Day */}
             <div className="space-y-4">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={selectedDay}
-                  initial={false}
-                  animate={{ opacity: 1 }}
-                  className="space-y-4"
-                >
-                  {MEALS.map((meal) => {
-                    const date = getDayDate(selectedDay);
-                    const satisfaction = stats[date]?.[meal];
-                    return (
-                      <div key={meal} className="relative">
-                        <div className="flex items-center gap-2 mb-2 px-1">
-                          <div className={`p-1.5 rounded-lg ${meal === 'Breakfast' ? 'bg-orange-100/20 text-orange-200' : meal === 'Lunch' ? 'bg-emerald-100/20 text-emerald-200' : 'bg-blue-100/20 text-blue-200'}`}>
-                            {getMealIcon(meal)}
-                          </div>
-                          <h3 className="text-white font-black uppercase tracking-widest text-xs">{meal}</h3>
+              <motion.div
+                key={selectedDay}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
+                className="space-y-4"
+              >
+                {MEALS.map((meal) => {
+                  const date = getDayDate(selectedDay);
+                  const satisfaction = stats[date]?.[meal];
+                  return (
+                    <div key={meal} className="relative">
+                      <div className="flex items-center gap-2 mb-2 px-1">
+                        <div className={`p-1.5 rounded-lg ${meal === 'Breakfast' ? 'bg-orange-100/20 text-orange-200' : meal === 'Lunch' ? 'bg-emerald-100/20 text-emerald-200' : 'bg-blue-100/20 text-blue-200'}`}>
+                          {getMealIcon(meal)}
                         </div>
-                        <MenuCard
-                          day={selectedDay}
-                          meal={meal}
-                          items={menu[selectedDay]?.[meal] || sampleMenu[selectedDay][meal]}
-                          poll={getPollForSlot(selectedDay, meal)}
-                          suggestionsLeft={suggestionsLeft}
-                          onCreatePoll={handleCreatePoll}
-                          onVote={handleVote}
-                          currentUserId={currentUserId}
-                        />
-                        {isManagement && satisfaction !== undefined && (
-                          <div className="absolute top-10 right-3 flex items-center gap-1 bg-white px-2 py-0.5 rounded-full shadow-sm border border-border z-20">
-                            <span className={`text-[10px] font-black ${satisfaction >= 70 ? "text-emerald" : satisfaction >= 40 ? "text-orange-500" : "text-destructive"}`}>
-                              {satisfaction}% Rating
-                            </span>
-                          </div>
-                        )}
+                        <h3 className="text-white font-black uppercase tracking-widest text-xs">{meal}</h3>
                       </div>
-                    );
-                  })}
-                </motion.div>
-              </AnimatePresence>
+                      <MenuCard
+                        day={selectedDay}
+                        meal={meal}
+                        items={menu[selectedDay]?.[meal] || sampleMenu[selectedDay][meal]}
+                        poll={getPollForSlot(selectedDay, meal)}
+                        suggestionsLeft={suggestionsLeft}
+                        onCreatePoll={handleCreatePoll}
+                        onVote={handleVote}
+                        currentUserId={currentUserId}
+                      />
+                      {isManagement && satisfaction !== undefined && (
+                        <div className="absolute top-10 right-3 flex items-center gap-1 bg-white px-2 py-0.5 rounded-full shadow-sm border border-border z-20">
+                          <span className={`text-[10px] font-black ${satisfaction >= 70 ? "text-emerald" : satisfaction >= 40 ? "text-orange-500" : "text-destructive"}`}>
+                            {satisfaction}% Rating
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </motion.div>
             </div>
           </div>
 
@@ -237,12 +236,9 @@ const MenuPage = () => {
                 </div>
 
                 {/* Rows */}
-                {DAYS.map((day, di) => (
-                  <motion.div
+                {DAYS.map((day) => (
+                  <div
                     key={day}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: di * 0.05 }}
                     className="grid grid-cols-[140px_1fr_1fr_1fr] gap-4 mb-4"
                   >
                     <div className="flex items-center rounded-2xl backdrop-blur-md bg-white/10 px-6 py-4 border border-white/10 group hover:bg-white/20 transition-all cursor-default relative overflow-hidden">
@@ -275,7 +271,7 @@ const MenuPage = () => {
                         </div>
                       );
                     })}
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             </div>
