@@ -29,7 +29,6 @@ const MenuCard = ({ day, meal, items, poll, suggestionsLeft, onCreatePoll, onVot
     <>
       {/* Default card */}
       <motion.div
-        layoutId={`card-${day}-${meal}`}
         onClick={() => setExpanded(true)}
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
@@ -46,11 +45,10 @@ const MenuCard = ({ day, meal, items, poll, suggestionsLeft, onCreatePoll, onVot
         <p className="text-sm font-medium text-foreground leading-relaxed line-clamp-3">{items}</p>
         {poll && (
           <div className="mt-3">
+            {/* Static progress bar — no animation on collapsed card */}
             <div className="w-full h-1.5 rounded-full bg-muted/50 overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${percent}%` }}
-                transition={{ duration: 1 }}
+              <div
+                style={{ width: `${percent}%` }}
                 className={`h-full rounded-full ${isHot ? "bg-gradient-warm" : "bg-gradient-emerald"}`}
               />
             </div>

@@ -1,12 +1,12 @@
 /**
  * VideoBackground.jsx
- * 
- * @description Feature-specific React Component.
- * @usage Used within pages to break down complex UI into smaller, manageable chunks.
- * @details Might contain some local state relevant to the component but often relies on props passed down from the parent page.
+ *
+ * Performance-optimized: only loads ONE video at a time.
+ * The next video is only set as src (and preloaded) AFTER the current
+ * one has been playing for a while — not all 5 upfront.
  */
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import foodVideo1 from "@/assets/food-bg-video.mp4";
 import foodVideo2 from "@/assets/food-bg-video-2.mp4";
 import foodVideo3 from "@/assets/food-bg-video-3.mp4";
@@ -14,54 +14,61 @@ import foodVideo4 from "@/assets/food-bg-video-4.mp4";
 import foodVideo5 from "@/assets/food-bg-video-5.mp4";
 
 const VIDEOS = [foodVideo1, foodVideo2, foodVideo3, foodVideo4, foodVideo5];
-const ROTATE_INTERVAL = 4000;
-const FADE_DURATION = 500;
+const ROTATE_INTERVAL = 8000; // Increased from 4s → 8s to reduce swap frequency
+const FADE_DURATION = 600;
 
 const VideoBackground = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [nextIndex, setNextIndex] = useState(1);
-  const [showNext, setShowNext] = useState(false);
+  const [nextIndex, setNextIndex] = useState(null); // null = don't preload yet
+  const [fading, setFading] = useState(false);
   const nextVideoRef = useRef(null);
-  const timerRef = useRef(null);
-
-  const rotateVideo = useCallback(() => {
-    // Preload and start playing next video before fading
-    if (nextVideoRef.current) {
-      nextVideoRef.current.currentTime = 0;
-      nextVideoRef.current.play().catch(() => { });
-    }
-    setShowNext(true);
-
-    setTimeout(() => {
-      setCurrentIndex(nextIndex);
-      setNextIndex((nextIndex + 1) % VIDEOS.length);
-      setShowNext(false);
-    }, FADE_DURATION);
-  }, [nextIndex]);
 
   useEffect(() => {
-    timerRef.current = setInterval(rotateVideo, ROTATE_INTERVAL);
-    return () => clearInterval(timerRef.current);
-  }, [rotateVideo]);
+    const timer = setInterval(() => {
+      const upcoming = (currentIndex + 1) % VIDEOS.length;
+      // Set nextIndex NOW so the next video src is assigned and preloads
+      setNextIndex(upcoming);
+
+      // Small delay to let browser buffer a tiny bit before fading
+      setTimeout(() => {
+        if (nextVideoRef.current) {
+          nextVideoRef.current.currentTime = 0;
+          nextVideoRef.current.play().catch(() => { });
+        }
+        setFading(true);
+
+        setTimeout(() => {
+          setCurrentIndex(upcoming);
+          setNextIndex(null); // clear next — stop rendering the hidden video
+          setFading(false);
+        }, FADE_DURATION);
+      }, 300);
+    }, ROTATE_INTERVAL);
+
+    return () => clearInterval(timer);
+  }, [currentIndex]);
 
   return (
     <div className="fixed inset-0 z-0 overflow-hidden">
-      {/* Bottom layer: next video (always rendering, revealed during fade) */}
+      {/* Next video — only rendered during transition, then unmounted */}
+      {nextIndex !== null && (
+        <video
+          ref={nextVideoRef}
+          className="absolute inset-0 w-full h-full object-cover"
+          src={VIDEOS[nextIndex]}
+          muted
+          loop
+          playsInline
+          preload="metadata" // only load metadata+first frame, not full video
+        />
+      )}
+
+      {/* Current video — fades out during transition */}
       <video
-        ref={nextVideoRef}
-        className="absolute inset-0 w-full h-full object-cover"
-        src={VIDEOS[nextIndex]}
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="auto"
-      />
-      {/* Top layer: current video (fades out to reveal next) */}
-      <video
+        key={currentIndex}
         className="absolute inset-0 w-full h-full object-cover transition-opacity ease-in-out"
         style={{
-          opacity: showNext ? 0 : 1,
+          opacity: fading ? 0 : 1,
           transitionDuration: `${FADE_DURATION}ms`,
         }}
         src={VIDEOS[currentIndex]}
@@ -71,6 +78,7 @@ const VideoBackground = () => {
         playsInline
         preload="auto"
       />
+
       {/* Overlays */}
       <div className="absolute inset-0 bg-black/30" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
