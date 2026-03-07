@@ -54,6 +54,7 @@
     "dotenv": "^17.3.1",
     "embla-carousel-react": "^8.6.0",
     "express": "^5.2.1",
+    "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^8.2.1",
     "framer-motion": "^12.34.3",
     "helmet": "^8.1.0",
