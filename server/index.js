@@ -121,6 +121,10 @@ app.get("/api/health", (req, res) =>
     res.json({ status: "ok", time: new Date().toISOString() })
 );
 
+app.get("/", (req, res) => {
+    res.send("Rasoi Backend API is running 🍛");
+});
+
 // ── Global Error Handler ──────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
     console.error("💥 PROD_ERROR:", err.stack || err);
