@@ -3,7 +3,7 @@
  * 
  * @description React Page Component: BillingPage.
  * @usage Rendered by react-router-dom as a full-page view.
- * @details Often contains state management, useEffect hooks for fetching initial data, and renders multiple smaller components.
+ * @details Shows billing summary with base fees, extras, rebate deductions, and meal-skip deductions.
  */
 
 import { useState, useEffect } from "react";
@@ -11,12 +11,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   IndianRupee, Download, Eye, CreditCard, Clock, AlertTriangle,
   CheckCircle2, X, UtensilsCrossed, TrendingDown,
-  FileText, ChevronRight
+  FileText, Coffee, Utensils, Moon
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
-
-const DAILY_RATE = 90;
 
 const StatusBadge = ({ status }) => {
   const styles = {
@@ -34,12 +32,15 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-const BreakdownModal = ({ bill, onClose, extras = [], rebates = [] }) => {
+const MEAL_ICONS = { breakfast: "☕", lunch: "🍛", dinner: "🥘" };
+
+const BreakdownModal = ({ bill, onClose, extras = [], rebates = [], mealSkips = [], perMealRate = 0 }) => {
   const [activeTab, setActiveTab] = useState("extras");
 
   const tabs = [
     { key: "extras", label: "Extra Items", amount: `₹${(bill.extrasTotal || 0).toLocaleString()}` },
     { key: "rebates", label: "Rebates", amount: `-₹${(bill.rebateDeductions || 0).toLocaleString()}` },
+    { key: "mealskips", label: "Meal Skips", amount: `-₹${(bill.mealSkipTotal || 0).toLocaleString()}` },
     { key: "daily", label: "Base Charges", amount: `₹${(bill.baseMess || 0).toLocaleString()}` },
   ];
 
@@ -49,17 +50,17 @@ const BreakdownModal = ({ bill, onClose, extras = [], rebates = [] }) => {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/40 backdrop-blur-sm" onClick={onClose}>
       <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-card rounded-2xl shadow-elevated border border-border w-full max-w-2xl max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        className="bg-card rounded-2xl shadow-elevated border border-border w-full max-w-2xl max-h-[85vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between p-6 border-b border-border">
           <h2 className="font-display text-xl font-bold text-foreground">Detailed Breakdown</h2>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted transition-colors"><X className="w-5 h-5 text-muted-foreground" /></button>
         </div>
-        <div className="flex border-b border-border">
+        <div className="flex border-b border-border overflow-x-auto">
           {tabs.map((tab) => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-              className={`flex-1 px-4 py-3 text-sm font-medium transition-colors relative ${activeTab === tab.key ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
+              className={`flex-1 px-3 py-3 text-xs font-medium transition-colors relative whitespace-nowrap ${activeTab === tab.key ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
               <span>{tab.label}</span>
-              <span className="block text-xs mt-0.5 opacity-70">{tab.amount}</span>
+              <span className={`block text-xs mt-0.5 opacity-70 font-semibold ${tab.key === "mealskips" || tab.key === "rebates" ? "text-emerald" : ""}`}>{tab.amount}</span>
               {activeTab === tab.key && <motion.div layoutId="tab-indicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
             </button>
           ))}
@@ -87,13 +88,34 @@ const BreakdownModal = ({ bill, onClose, extras = [], rebates = [] }) => {
                 return (
                   <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-muted/50 border border-border">
                     <div><p className="text-sm font-medium text-foreground">{r.reason}</p><p className="text-xs text-muted-foreground mt-0.5">{formatDate(r.from_date)} → {formatDate(r.to_date)} ({days} days)</p></div>
-                    <div className="text-right">
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${r.status === "approved" ? "bg-emerald/20 text-emerald" : "bg-accent/20 text-accent-foreground"}`}>{r.status}</span>
-                    </div>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${r.status === "approved" ? "bg-emerald/20 text-emerald" : "bg-accent/20 text-accent-foreground"}`}>{r.status}</span>
                   </div>
                 );
               })}
               {rebates.length === 0 && <p className="py-10 text-center text-sm text-muted-foreground">No rebates filed.</p>}
+            </div>
+          )}
+          {activeTab === "mealskips" && (
+            <div className="space-y-3">
+              {mealSkips.length === 0 && <p className="py-10 text-center text-sm text-muted-foreground">No meal skips this month.</p>}
+              {mealSkips.map((s, i) => (
+                <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-emerald/5 border border-emerald/20">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{MEAL_ICONS[s.meal] || "🍽️"}</span>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground capitalize">{s.meal}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(s.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
+                    </div>
+                  </div>
+                  <span className="text-sm font-bold text-emerald">-₹{perMealRate}</span>
+                </div>
+              ))}
+              {mealSkips.length > 0 && (
+                <div className="mt-2 p-3 rounded-xl bg-emerald/10 border border-emerald/20 flex justify-between">
+                  <span className="text-sm font-bold text-foreground">Total Saved</span>
+                  <span className="text-sm font-bold text-emerald">-₹{mealSkips.length * perMealRate}</span>
+                </div>
+              )}
             </div>
           )}
           {activeTab === "daily" && (
@@ -113,20 +135,23 @@ const BillingPage = () => {
   const [summary, setSummary] = useState(null);
   const [extras, setExtras] = useState([]);
   const [rebates, setRebates] = useState([]);
+  const [mealSkips, setMealSkips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showBreakdown, setShowBreakdown] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [sumRes, extRes, rebRes] = await Promise.all([
+        const [sumRes, extRes, rebRes, skipRes] = await Promise.all([
           api.getBillingSummary(),
           api.getMyExtras(),
-          api.getMyRebates()
+          api.getMyRebates(),
+          api.getMealSkips(),
         ]);
         setSummary(sumRes);
         setExtras(extRes || []);
         setRebates(rebRes || []);
+        setMealSkips(skipRes || []);
       } catch (err) {
         console.error("Billing fetch failed:", err);
       } finally {
@@ -144,10 +169,13 @@ const BillingPage = () => {
     baseMess: summary.base_fee,
     extrasTotal: summary.extras_total,
     rebateDeductions: summary.rebate_total,
+    mealSkipTotal: summary.meal_skip_total || 0,
     totalAmount: summary.net_bill,
     paymentStatus: "pending",
     paymentDeadline: "2026-03-31",
   };
+
+  const perMealRate = summary.per_meal_rate || 0;
 
   const formatDateFull = (d) => new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
 
@@ -176,6 +204,18 @@ const BillingPage = () => {
               <div className="flex justify-between items-center"><span className="text-sm text-muted-foreground flex items-center gap-2"><UtensilsCrossed className="w-4 h-4" />Base Fees</span><span className="text-sm font-semibold text-foreground">₹{bill.baseMess.toLocaleString()}</span></div>
               <div className="flex justify-between items-center"><span className="text-sm text-muted-foreground flex items-center gap-2"><CreditCard className="w-4 h-4" />Extra Purchases</span><span className="text-sm font-semibold text-primary">+ ₹{bill.extrasTotal.toLocaleString()}</span></div>
               <div className="flex justify-between items-center"><span className="text-sm text-muted-foreground flex items-center gap-2"><TrendingDown className="w-4 h-4" />Rebate Deductions</span><span className="text-sm font-semibold text-emerald">- ₹{bill.rebateDeductions.toLocaleString()}</span></div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                  <span className="text-base">🍽️</span>
+                  Meal Skips
+                  {bill.mealSkipTotal > 0 && (
+                    <span className="text-[10px] bg-emerald/10 text-emerald px-1.5 py-0.5 rounded-full font-semibold">
+                      {summary.meal_skip_count} meals
+                    </span>
+                  )}
+                </span>
+                <span className="text-sm font-semibold text-emerald">- ₹{bill.mealSkipTotal.toLocaleString()}</span>
+              </div>
               <hr className="border-border" />
               <div className="flex justify-between items-center"><span className="text-base font-bold text-foreground">Total Payable</span><span className="text-2xl font-display font-bold text-gradient-warm">₹{bill.totalAmount.toLocaleString()}</span></div>
             </div>
@@ -188,11 +228,18 @@ const BillingPage = () => {
         </motion.div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-          {[{ label: "Base Charges", val: bill.baseMess, icon: UtensilsCrossed }, { label: "Extras", val: bill.extrasTotal, icon: CreditCard }, { label: "Savings", val: bill.rebateDeductions, icon: TrendingDown, color: "text-emerald" }].map((s, i) => (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+          {[
+            { label: "Base Charges", val: bill.baseMess, icon: UtensilsCrossed },
+            { label: "Extras", val: bill.extrasTotal, icon: CreditCard },
+            { label: "Rebate Savings", val: bill.rebateDeductions, icon: TrendingDown, color: "text-emerald" },
+            { label: "Meal Skip Saved", val: bill.mealSkipTotal, emoji: "🍽️", color: "text-emerald" },
+          ].map((s, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.05 }} className="bg-card rounded-2xl p-5 border border-border">
-              <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center mb-3"><s.icon className="w-5 h-5 text-primary" /></div>
-              <p className={`text-2xl font-display font-bold ${s.color || "text-foreground"}`}>₹{s.val.toLocaleString()}</p>
+              <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center mb-3">
+                {s.emoji ? <span className="text-xl">{s.emoji}</span> : <s.icon className="w-5 h-5 text-primary" />}
+              </div>
+              <p className={`text-2xl font-display font-bold ${s.color || "text-foreground"}`}>₹{(s.val || 0).toLocaleString()}</p>
               <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
             </motion.div>
           ))}
@@ -200,7 +247,16 @@ const BillingPage = () => {
       </div>
 
       <AnimatePresence>
-        {showBreakdown && <BreakdownModal bill={bill} onClose={() => setShowBreakdown(false)} extras={extras} rebates={rebates} />}
+        {showBreakdown && (
+          <BreakdownModal
+            bill={bill}
+            onClose={() => setShowBreakdown(false)}
+            extras={extras}
+            rebates={rebates}
+            mealSkips={mealSkips}
+            perMealRate={perMealRate}
+          />
+        )}
       </AnimatePresence>
     </div>
   );
