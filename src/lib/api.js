@@ -70,6 +70,12 @@ export const api = {
     updateRebateStatus: (id, body) => request(`/api/billing/rebates/${id}`, { method: "PATCH", body }),
     deleteRebate: (id) => request(`/api/billing/rebates/${id}`, { method: "DELETE" }),
 
+    // Meal Skips
+    getMealSkips: () => request("/api/billing/meal-skips"),
+    submitMealSkip: (meal) => request("/api/billing/meal-skips", { method: "POST", body: { meal } }),
+    cancelMealSkip: (id) => request(`/api/billing/meal-skips/${id}`, { method: "DELETE" }),
+    getTodayMealSkips: () => request("/api/billing/meal-skips/today"),
+
     // Extras Billing (Munimji/Admin)
     searchStudents: (q) => request(`/api/billing/students/search?q=${encodeURIComponent(q)}`),
     billExtras: (body) => request("/api/billing/extras", { method: "POST", body }),

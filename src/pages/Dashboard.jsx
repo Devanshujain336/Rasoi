@@ -347,6 +347,14 @@ const Dashboard = () => {
                   </div>
                   <span className="font-bold text-emerald text-lg">-₹{summary?.rebate_total || 0}</span>
                 </div>
+
+                <div className="bg-[#F0FFF4] p-4 rounded-2xl flex justify-between items-center group hover:bg-[#D1FFE2] transition-colors border border-emerald/20">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🍽️</div>
+                    <span className="font-bold text-emerald">Meal Skips</span>
+                  </div>
+                  <span className="font-bold text-emerald text-lg">-₹{summary?.meal_skip_total || 0}</span>
+                </div>
               </div>
 
               <div className="mt-6 pt-6 border-t-2 border-border border-dashed flex justify-between items-center">
