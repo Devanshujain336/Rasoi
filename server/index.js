@@ -16,7 +16,8 @@ import helmet from "helmet";
 import compression from "compression";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
-import mongoSanitize from "express-mongo-sanitize";
+// express-mongo-sanitize removed (incompatible with router v2 / Express 5 router)
+// Inline sanitizer below handles NoSQL injection protection
 import connectDB from "./db.js";
 import authRoutes from "./routes/auth.js";
 import profileRoutes from "./routes/profiles.js";
@@ -64,7 +65,25 @@ app.use(cors({
 
 // ── Body Parser + NoSQL Injection Protection ──────────────────────────────────
 app.use(express.json({ limit: "10kb" }));       // Prevent oversized payloads
-app.use(mongoSanitize());                        // Strip $ and . from user input — prevents NoSQL injection
+
+// Custom NoSQL sanitizer — strips keys starting with $ or containing .
+// (express-mongo-sanitize is incompatible with the standalone `router` pkg)
+const sanitizeObj = (obj) => {
+    if (!obj || typeof obj !== "object") return obj;
+    for (const key of Object.keys(obj)) {
+        if (key.startsWith("$") || key.includes(".")) {
+            delete obj[key];
+        } else if (typeof obj[key] === "object") {
+            sanitizeObj(obj[key]);
+        }
+    }
+    return obj;
+};
+app.use((req, _res, next) => {
+    if (req.body) sanitizeObj(req.body);
+    if (req.params) sanitizeObj(req.params);
+    next();
+});
 
 // ── Rate Limiting — General API ───────────────────────────────────────────────
 const limiter = rateLimit({
