@@ -50,7 +50,7 @@ const MenuPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get("http://localhost:3001/api/menu", { withCredentials: true });
+        const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/menu`, { withCredentials: true });
         if (res.data.menu) {
           const formattedMenu = {};
           for (const d in res.data.menu) {
@@ -99,7 +99,7 @@ const MenuPage = () => {
   const handleCreatePoll = async (day, meal, suggestion) => {
     if (suggestionsLeft <= 0) return;
     try {
-      const res = await axios.post("http://localhost:3001/api/menu/polls", { day, meal, suggestion }, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
+      const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/menu/polls`, { day, meal, suggestion }, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
       setPolls(prev => [res.data, ...prev]);
       setSuggestionsLeft(prev => prev - 1);
     } catch (error) {
@@ -109,7 +109,7 @@ const MenuPage = () => {
 
   const handleVote = async (pollId) => {
     try {
-      const res = await axios.post(`http://localhost:3001/api/menu/polls/${pollId}/vote`, {}, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
+      const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/menu/polls/${pollId}/vote`, {}, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
       setPolls(prev => prev.map(p => (p._id || p.id) === pollId ? res.data : p));
     } catch (error) {
       console.error("Failed to vote", error);
