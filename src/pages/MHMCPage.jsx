@@ -196,7 +196,7 @@ const MenuEditor = ({ menu, setMenu, editModal, setEditModal, polls, stats }) =>
       [editModal.day]: { ...menu[editModal.day], [editModal.meal]: editItems.filter(i => i.trim()) },
     };
     try {
-      await axios.put("http://localhost:3001/api/menu", { data: updatedMenu }, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
+      await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/menu`, { data: updatedMenu }, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
       setMenu(updatedMenu);
       setEditModal(null);
     } catch (error) {
@@ -309,7 +309,7 @@ const ActivePollsTab = ({ polls, setPolls, pollDetail, setPollDetail, setShowCon
 
   const handleApprove = async (pollId) => {
     try {
-      await axios.put(`http://localhost:3001/api/menu/polls/${pollId}/status`, { status: "approved" }, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
+      await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/menu/polls/${pollId}/status`, { status: "approved" }, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 3000);
       setPollDetail(null);
@@ -323,7 +323,7 @@ const ActivePollsTab = ({ polls, setPolls, pollDetail, setPollDetail, setShowCon
   const handleReject = async (pollId) => {
     try {
       // The backend now deletes the poll when status is set to "rejected"
-      await axios.put(`http://localhost:3001/api/menu/polls/${pollId}/status`, { status: "rejected" }, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
+      await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/menu/polls/${pollId}/status`, { status: "rejected" }, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
       setPollDetail(null);
       // Refresh the list to remove the deleted poll from the UI
       onUpdate();
