@@ -1,8 +1,8 @@
 # Rasoi 🍲 — Hostel Mess Management System
 
-> **"A step towards Ghar ka Khana"** — Built for students, by students.
+> **"A comprehensive digitization platform for large-scale institutional operations."**
 
-Rasoi is a full-stack web application that digitizes every aspect of hostel mess management: daily menus, voting on food suggestions, rebate filing, extras billing, and democratic MHMC elections — all from one student-friendly dashboard.
+Rasoi is a full-stack web application that digitizes every aspect of complex institutional dining management: dynamic menus, democratic polling on food suggestions, rebate workflows, extras billing, and administrative elections — all from one seamless dashboard.
 
 ---
 
@@ -167,22 +167,6 @@ npm run dev
 
 ---
 
-## 🧪 Running Tests
-
-```bash
-npm test
-# Runs all 5 test suites via Vitest (no DB required — fully mocked)
-```
-
-Test coverage:
-- `server/tests/auth.middleware.test.js` — JWT protect middleware (4 cases)
-- `server/tests/auth.schemas.test.js` — Zod signup/login validation (10 cases)
-- `server/tests/billing.utils.test.js` — Net bill calculation formula (6 cases)
-- `src/tests/Navbar.test.jsx` — Role-based nav visibility (8 cases)
-- `src/tests/FeatureCard.test.jsx` — Component rendering (5 cases)
-
----
-
 ## ☁️ Live Application
 
 You can access the deployed application here: **[https://rasoi-nn78.vercel.app](https://rasoi-nn78.vercel.app)**
@@ -213,4 +197,4 @@ Rasoi/
 
 ## 📄 License
 
-MIT — built as a student project for hostel mess digitization.
+MIT
