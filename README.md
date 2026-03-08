@@ -183,24 +183,9 @@ Test coverage:
 
 ---
 
-## ☁️ Deployment
+## ☁️ Live Application
 
-### Frontend → Vercel
-1. Push to GitHub
-2. Import repo at [vercel.com](https://vercel.com)
-3. Set `VITE_API_URL` to your backend URL in Vercel environment variables
-4. Deploy
-
-### Backend → Render
-1. Create a new **Web Service** on [render.com](https://render.com)
-2. Build command: `npm install`
-3. Start command: `npm run server`
-4. Set environment variables: `MONGO_URI`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `CLIENT_URL`, `PORT`
-
-### Database → MongoDB Atlas
-1. Create a free cluster at [cloud.mongodb.com](https://cloud.mongodb.com)
-2. Whitelist Render's IP (or use `0.0.0.0/0` for dev)
-3. Copy the connection string to `MONGO_URI`
+You can access the deployed application here: **[https://rasoi-nn78.vercel.app](https://rasoi-nn78.vercel.app)**
 
 ---
 
