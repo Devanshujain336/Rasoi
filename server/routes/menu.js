@@ -13,6 +13,7 @@ import Profile from "../models/Profile.js";
 import Rating from "../models/Rating.js";
 import { protect as authMiddleware } from "../middleware/auth.js";
 import { z } from "zod";
+import cache from "../cache.js";
 
 const router = express.Router();
 
@@ -32,15 +33,22 @@ const initialMenu = {
     Sunday: { Breakfast: ["Puri", "Halwa", "Chana"], Lunch: ["Special Thali - Assorted"], Dinner: ["Fried Rice", "Manchurian", "Soup"] },
 };
 
-// GET menu and polls (public)
+// GET menu and polls (public) — cached for 5 minutes
 router.get("/", async (req, res) => {
     try {
+        const CACHE_KEY = "menu:data";
+        const cached = cache.get(CACHE_KEY);
+        if (cached) return res.json(cached);
+
         let menuDoc = await Menu.findOne();
         if (!menuDoc) {
             menuDoc = await Menu.create({ data: initialMenu });
         }
         const polls = await Poll.find().sort({ createdAt: -1 });
-        res.json({ menu: menuDoc.data, polls });
+        const result = { menu: menuDoc.data, polls };
+
+        cache.set(CACHE_KEY, result, 300); // 5 minutes
+        res.json(result);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -63,6 +71,7 @@ router.put("/", authMiddleware, async (req, res) => {
             menuDoc.updated_at = Date.now();
             await menuDoc.save();
         }
+        cache.invalidate("menu"); // Bust menu cache on update
         res.json({ message: "Menu updated successfully", menu: menuDoc.data });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -82,6 +91,7 @@ router.post("/polls", authMiddleware, async (req, res) => {
             votes: 1
         });
         await newPoll.save();
+        cache.invalidate("menu"); // Bust menu+polls cache
         res.status(201).json(newPoll);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -107,6 +117,7 @@ router.post("/polls/:id/vote", authMiddleware, async (req, res) => {
             return res.status(400).json({ error: "You have already voted on this poll" });
         }
 
+        cache.invalidate("menu"); // Bust cache on vote
         res.json(poll);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -125,6 +136,7 @@ router.put("/polls/:id/status", authMiddleware, async (req, res) => {
 
         if (status === "rejected") {
             await Poll.findByIdAndDelete(req.params.id);
+            cache.invalidate("menu"); // Bust cache on reject
             return res.json({ message: "Poll rejected and removed successfully" });
         }
 
@@ -147,6 +159,7 @@ router.put("/polls/:id/status", authMiddleware, async (req, res) => {
         }
 
         await poll.save();
+        cache.invalidate("menu"); // Bust cache on approve
         res.json(poll);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -167,6 +180,7 @@ router.post("/ratings", authMiddleware, async (req, res) => {
             { score },
             { upsert: true, new: true }
         );
+        cache.invalidate("ratings"); // Bust rating stats cache
         res.json(rating);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -184,10 +198,14 @@ router.get("/ratings/my", authMiddleware, async (req, res) => {
     }
 });
 
-// GET RATINGS STATS (MHMC/Admin/MunimJi)
+// GET RATINGS STATS (MHMC/Admin/MunimJi) — cached for 2 minutes
 router.get("/ratings/stats", authMiddleware, async (req, res) => {
     try {
         const { month } = req.query; // YYYY-MM
+        const CACHE_KEY = `ratings:stats:${month}`;
+        const cached = cache.get(CACHE_KEY);
+        if (cached) return res.json(cached);
+
         const start = `${month}-01`;
         const end = `${month}-31`; // Simple approach
 
@@ -214,6 +232,7 @@ router.get("/ratings/stats", authMiddleware, async (req, res) => {
             formatted[date][s._id.meal] = rate;
         });
 
+        cache.set(CACHE_KEY, formatted, 120); // 2 minutes
         res.json(formatted);
     } catch (error) {
         res.status(500).json({ error: error.message });
