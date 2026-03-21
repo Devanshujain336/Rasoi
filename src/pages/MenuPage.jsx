@@ -14,6 +14,7 @@ import ActivePolls from "@/components/menu/ActivePolls";
 import axios from "axios";
 import { useAuth } from "@/contexts/AuthContext";
 import { Coffee, Sun, Moon, Calendar, ChevronRight, ChevronLeft } from "lucide-react";
+import api from "@/lib/api";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const MEALS = ["Breakfast", "Lunch", "Dinner"];
