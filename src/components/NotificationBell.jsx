@@ -60,7 +60,7 @@ const NotificationBell = () => {
     try {
       await api.markRead([notifId]);
       setReadIds((prev) => new Set([...prev, notifId]));
-    } catch { }
+    } catch (err) { console.error(err); }
   };
 
   const markAllRead = async () => {
@@ -69,7 +69,7 @@ const NotificationBell = () => {
     try {
       await api.markRead(unread);
       setReadIds(new Set(notifications.map((n) => n._id)));
-    } catch { }
+    } catch (err) { console.error(err); }
   };
 
   const handleBroadcast = async (e) => {

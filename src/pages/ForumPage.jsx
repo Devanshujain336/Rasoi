@@ -166,7 +166,7 @@ const PostDetail = ({ postId, onBack }) => {
       const data = await api.getPost(postId);
       setPost(data.post);
       setComments(data.comments || []);
-    } catch { }
+    } catch (err) { console.error(err); }
     setLoading(false);
   };
 
@@ -176,7 +176,7 @@ const PostDetail = ({ postId, onBack }) => {
     try {
       await api.addComment(postId, { content: newComment, parent_comment_id: replyTo || null });
       setNewComment(""); setReplyTo(null); fetchAll();
-    } catch { }
+    } catch (err) { console.error(err); }
   };
 
   const handleDeleteComment = async (commentId) => {
@@ -327,7 +327,7 @@ const ForumPage = () => {
       if (sortBy === "popular") params.sort = "popular";
       const data = await api.getPosts(params);
       setPosts(data || []);
-    } catch { }
+    } catch (err) { console.error(err); }
     setLoading(false);
   };
 
