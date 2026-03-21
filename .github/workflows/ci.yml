@@ -1,0 +1,140 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Rasoi CI/CD Pipeline
+#
+# Triggers:  push / PR to main or master
+# Jobs:      lint → test → build → deploy-frontend + deploy-backend
+# ──────────────────────────────────────────────────────────────────────────────
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+    branches: ["main", "master"]
+
+# Cancel any in-progress runs on the same branch to save CI minutes
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# ── Reusable env vars ────────────────────────────────────────────────────────
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  # ╔═══════════════════════════════════════════════════════════════════════════╗
+  # ║  LINT — Static analysis with ESLint                                     ║
+  # ╚═══════════════════════════════════════════════════════════════════════════╝
+  lint:
+    name: 🔍 Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint:ci
+
+  # ╔═══════════════════════════════════════════════════════════════════════════╗
+  # ║  TEST — Unit & integration tests with Vitest                            ║
+  # ╚═══════════════════════════════════════════════════════════════════════════╝
+  test:
+    name: 🧪 Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm run test
+
+  # ╔═══════════════════════════════════════════════════════════════════════════╗
+  # ║  BUILD — Vite production build                                          ║
+  # ╚═══════════════════════════════════════════════════════════════════════════╝
+  build:
+    name: 🏗️ Build
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production bundle
+        run: npm run build
+        env:
+          NODE_ENV: production
+          VITE_API_URL: ${{ secrets.PRODUCTION_API_URL }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 1
+
+  # ╔═══════════════════════════════════════════════════════════════════════════╗
+  # ║  DEPLOY FRONTEND — Push to Vercel (production)                          ║
+  # ╚═══════════════════════════════════════════════════════════════════════════╝
+  deploy-frontend:
+    name: 🚀 Deploy Frontend (Vercel)
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    environment:
+      name: production-frontend
+      url: ${{ steps.deploy.outputs.url }}
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel Environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build with Vercel
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy to Vercel
+        id: deploy
+        run: |
+          URL=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$URL" >> $GITHUB_OUTPUT
+          echo "✅ Deployed to: $URL"
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # DEPLOY BACKEND — Render auto-deploys on commit (Auto-Deploy: On Commit).
+  # No GitHub Actions job needed. Monitor deploys at https://dashboard.render.com
+  # ────────────────────────────────────────────────────────────────────────────
