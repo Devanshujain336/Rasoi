@@ -27,3 +27,4 @@ const Notification = mongoose.model("Notification", notificationSchema);
 const NotificationRead = mongoose.model("NotificationRead", notificationReadSchema);
 
 export { Notification, NotificationRead };
+
