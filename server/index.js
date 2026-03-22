@@ -144,5 +144,8 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`🚀 Server running at http://localhost:${PORT}`);
+    console.log(`\n--------------------------------------`);
+    console.log(`🚀 RASOI SERVER STARTED [VERSION 1.0.1]`);
+    console.log(`🔌 URL: http://localhost:${PORT}`);
+    console.log(`--------------------------------------\n`);
 });

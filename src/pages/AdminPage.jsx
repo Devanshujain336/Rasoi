@@ -6,7 +6,7 @@
  * @details Often contains state management, useEffect hooks for fetching initial data, and renders multiple smaller components.
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { Building2, Upload, Users, Plus, Shield, AlertCircle, CheckCircle, Trash2, Mail } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -50,7 +50,7 @@ const AdminPage = () => {
     }
   }, [selectedHostel]);
 
-  const fetchHostelEmails = async (id) => {
+  const fetchHostelEmails = useCallback(async (id) => {
     setLoadingEmails(true);
     try {
       const data = await api.getHostelEmails(id);
@@ -60,7 +60,7 @@ const AdminPage = () => {
     } finally {
       setLoadingEmails(false);
     }
-  };
+  }, []);
 
   const fetchHostels = async () => {
     setLoading(true);
@@ -164,7 +164,7 @@ const AdminPage = () => {
     }
   };
 
-  const handleDeleteEmail = async (id, email) => {
+  const handleDeleteEmail = useCallback(async (id, email) => {
     if (!window.confirm(`Are you sure you want to remove ${email} from the approved list?`)) return;
     setDeletingEmail(id);
     try {
@@ -177,9 +177,9 @@ const AdminPage = () => {
     } finally {
       setDeletingEmail(null);
     }
-  };
+  }, [selectedHostel, fetchHostelEmails]);
 
-  const handleTestEmail = async () => {
+  const handleTestEmail = useCallback(async () => {
     setMsg({ type: "info", text: "Sending test email..." });
     try {
       await api.testEmail();
@@ -187,7 +187,7 @@ const AdminPage = () => {
     } catch (err) {
       alert("❌ Test failed: " + err.message);
     }
-  };
+  }, []);
 
   if (loading) return <div className="min-h-screen pt-20 flex items-center justify-center"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
 

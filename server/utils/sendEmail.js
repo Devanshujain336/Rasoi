@@ -30,10 +30,22 @@ const sendEmail = async (options) => {
         },
         tls: {
             rejectUnauthorized: false
-        }
+        },
+        // Force IPv4 to avoid ENETUNREACH errors on some cloud environments (like Render)
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 20000,
+        family: 4 
     });
 
-    console.log(`📡 SMTP: Attempting connection to ${transporter.options.host}:${transporter.options.port}...`);
+    try {
+        console.log(`📡 SMTP: Verifying connection to ${transporter.options.host}:${transporter.options.port}...`);
+        await transporter.verify();
+        console.log("✅ SMTP: Server is ready to take our messages");
+    } catch (err) {
+        console.error("❌ SMTP: Verification failed:", err);
+        // We don't throw here to avoid crashing but we log it clearly
+    }
 
     const mailOptions = {
         from: `"Rasoi Admin" <${process.env.EMAIL_USER}>`,
