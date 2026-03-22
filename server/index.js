@@ -2,10 +2,11 @@
  * index.js
  *
  * @description Entry Point for the Express Backend Server.
- * @usage Run via Node.js to start the HTTP server listening on the defined PORT.
- * @details Configures global middleware (CORS, Rate Limiter, Body Parser, NoSQL Sanitizer)
- *          and mounts all route handlers. Connects to MongoDB.
  */
+
+console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+console.log("🚀 SERVER BOOTING: VERSION 1.0.3 - DIAGNOSTIC");
+console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 
 import dotenv from "dotenv";
 dotenv.config(); // Reads from root .env
