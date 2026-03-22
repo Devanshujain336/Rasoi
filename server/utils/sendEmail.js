@@ -22,8 +22,8 @@ const sendEmail = async (options) => {
 
     const transporter = nodemailer.createTransport({
         host: "smtp.gmail.com",
-        port: 587,
-        secure: false, // use STARTTLS
+        port: 465,
+        secure: true, // use SSL/TLS
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS,
@@ -31,10 +31,10 @@ const sendEmail = async (options) => {
         tls: {
             rejectUnauthorized: false
         },
-        // Force IPv4 to avoid ENETUNREACH errors on some cloud environments (like Render)
-        connectionTimeout: 10000,
-        greetingTimeout: 10000,
-        socketTimeout: 20000,
+        // Force IPv4 and use conservative timeouts
+        connectionTimeout: 15000,
+        greetingTimeout: 15000,
+        socketTimeout: 30000,
         family: 4 
     });
 
