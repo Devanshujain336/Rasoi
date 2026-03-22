@@ -8,7 +8,13 @@
  */
 
 import dotenv from "dotenv";
-dotenv.config(); // Reads from root .env (MONGO_URI, JWT_SECRET, PORT, CLIENT_URL)
+dotenv.config(); // Reads from root .env
+
+import dns from "node:dns";
+// Force IPv4-first resolution to fix ENETUNREACH errors on Render
+if (typeof dns.setDefaultResultOrder === "function") {
+    dns.setDefaultResultOrder("ipv4first");
+}
 
 import express from "express";
 import cors from "cors";
@@ -125,13 +131,27 @@ app.use("/api/billing", billingRoutes);
 app.use("/api/menu", menuRoutes);
 
 // ── Health Check ──────────────────────────────────────────────────────────────
+app.get("/api/ping", (req, res) => res.json({ message: "pong", version: "1.0.2", time: new Date().toISOString() }));
+
 app.get("/api/health", (req, res) =>
     res.json({ status: "ok", time: new Date().toISOString() })
 );
 
 app.get("/", (req, res) => {
-    res.send("Rasoi Backend API is running 🍛");
+    res.send("Rasoi Backend API is running 🍛 [V1.0.2]");
 });
+
+// ── Route Printer (Diagnostic) ────────────────────────────────────────────────
+function printRoutes(stack, prefix = "") {
+    stack.forEach((layer) => {
+        if (layer.route) {
+            const methods = Object.keys(layer.route.methods).join(",").toUpperCase();
+            console.log(`📍 [${methods}] ${prefix}${layer.route.path}`);
+        } else if (layer.name === "router" && layer.handle.stack) {
+            printRoutes(layer.handle.stack, prefix + layer.regexp.source.replace("^\\/", "").replace("\\/?(?=\\/|$)", ""));
+        }
+    });
+}
 
 // ── Global Error Handler ──────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
@@ -145,7 +165,13 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
     console.log(`\n--------------------------------------`);
-    console.log(`🚀 RASOI SERVER STARTED [VERSION 1.0.1]`);
+    console.log(`🚀 RASOI SERVER STARTED [VERSION 1.0.2]`);
     console.log(`🔌 URL: http://localhost:${PORT}`);
+    console.log(`🔍 REGISTERED ROUTES:`);
+    try {
+        printRoutes(app._router.stack);
+    } catch (e) {
+        console.log("⚠️ Could not print routes:", e.message);
+    }
     console.log(`--------------------------------------\n`);
 });
