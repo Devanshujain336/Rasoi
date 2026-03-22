@@ -9,9 +9,6 @@
 import express from "express";
 import Hostel from "../models/Hostel.js";
 import AllowedEmail from "../models/AllowedEmail.js";
-import express from "express";
-import Hostel from "../models/Hostel.js";
-import AllowedEmail from "../models/AllowedEmail.js";
 import Profile from "../models/Profile.js";
 import { protect } from "../middleware/auth.js";
 import sendEmail from "../utils/sendEmail.js";
