@@ -179,14 +179,34 @@ const AdminPage = () => {
     }
   };
 
+  const handleTestEmail = async () => {
+    setMsg({ type: "info", text: "Sending test email..." });
+    try {
+      await api.testEmail();
+      alert("✅ Test email triggered! Check your inbox.");
+    } catch (err) {
+      alert("❌ Test failed: " + err.message);
+    }
+  };
+
   if (loading) return <div className="min-h-screen pt-20 flex items-center justify-center"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
 
   return (
     <div className="min-h-screen pt-20 md:pb-12 pb-[85px] bg-background">
       <div className="container mx-auto px-4 max-w-4xl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className="font-display text-4xl font-bold text-foreground mb-1">Admin Panel</h1>
-          <p className="text-muted-foreground mb-8">Manage hostels and import students</p>
+          <div className="flex justify-between items-end mb-8">
+            <div>
+              <h1 className="font-display text-4xl font-bold text-foreground mb-1">Admin Panel</h1>
+              <p className="text-muted-foreground">Manage hostels and import students</p>
+            </div>
+            <button 
+              onClick={handleTestEmail}
+              className="px-4 py-2 rounded-xl bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all text-xs font-bold flex items-center gap-2"
+            >
+              <Mail className="w-3.5 h-3.5" /> Send Test Email
+            </button>
+          </div>
 
           {msg.text && (
             <div className={`flex items-center gap-2 p-3 rounded-xl border text-sm mb-6 ${msg.type === "error" ? "bg-destructive/10 border-destructive/20 text-destructive" : "bg-secondary/10 border-secondary/20 text-secondary"}`}>

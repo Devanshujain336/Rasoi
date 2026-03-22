@@ -45,6 +45,7 @@ export const api = {
     getHostelEmails: (id) => request(`/api/admin/hostels/${id}/emails`),
     importStudents: (body) => request("/api/admin/import-students", { method: "POST", body }),
     deleteHostelEmail: (id) => request(`/api/admin/emails/${id}`, { method: "DELETE" }),
+    testEmail: () => request("/api/admin/test-email"),
 
     // Forum
     getPosts: (params = {}) => {
