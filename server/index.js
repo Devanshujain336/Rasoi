@@ -132,14 +132,14 @@ app.use("/api/billing", billingRoutes);
 app.use("/api/menu", menuRoutes);
 
 // ── Health Check ──────────────────────────────────────────────────────────────
-app.get("/api/ping", (req, res) => res.json({ message: "pong", version: "1.0.4", time: new Date().toISOString() }));
+app.get("/api/ping", (req, res) => res.json({ message: "pong", version: "1.0.5", time: new Date().toISOString() }));
 
 app.get("/api/health", (req, res) =>
     res.json({ status: "ok", time: new Date().toISOString() })
 );
 
 app.get("/", (req, res) => {
-    res.send("Rasoi Backend API is running 🍛 [V1.0.4]");
+    res.send("Rasoi Backend API is running 🍛 [V1.0.5]");
 });
 
 // ── Route Printer (Diagnostic) ────────────────────────────────────────────────
@@ -166,7 +166,7 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
     console.log(`\n--------------------------------------`);
-    console.log(`🚀 RASOI SERVER STARTED [VERSION 1.0.4]`);
+    console.log(`🚀 RASOI SERVER STARTED [VERSION 1.0.5]`);
     console.log(`🔌 URL: http://localhost:${PORT}`);
     console.log(`🔍 REGISTERED ROUTES:`);
     try {

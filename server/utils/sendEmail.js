@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import dns from "node:dns";
 
 /**
  * sendEmail utility
@@ -35,7 +36,7 @@ const sendEmail = async (options) => {
         // Forces the specific SMTP lookup to ignore IPv6 records
         family: 4,
         lookup: (hostname, options, callback) => {
-            require("node:dns").lookup(hostname, { family: 4 }, callback);
+            dns.lookup(hostname, { family: 4 }, callback);
         },
         connectionTimeout: 15000,
         greetingTimeout: 15000,
