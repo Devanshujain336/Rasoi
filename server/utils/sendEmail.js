@@ -33,8 +33,10 @@ const sendEmail = async (options) => {
         }
     });
 
+    console.log(`📡 SMTP: Attempting connection to ${transporter.options.host}:${transporter.options.port}...`);
+
     const mailOptions = {
-        from: `Rasoi Auth <${process.env.EMAIL_USER}>`,
+        from: `"Rasoi Admin" <${process.env.EMAIL_USER}>`,
         to: options.to,
         subject: options.subject,
         text: options.text,

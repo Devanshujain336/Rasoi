@@ -11,6 +11,7 @@ import Hostel from "../models/Hostel.js";
 import AllowedEmail from "../models/AllowedEmail.js";
 import Profile from "../models/Profile.js";
 import { protect } from "../middleware/auth.js";
+import sendEmail from "../utils/sendEmail.js";
 
 const router = express.Router();
 
@@ -165,6 +166,22 @@ router.get("/hostels/:id/emails", protect, adminOnly, async (req, res) => {
         res.json(emails);
     } catch (err) {
         res.status(500).json({ error: err.message });
+    }
+});
+
+// GET /api/admin/test-email
+router.get("/test-email", protect, adminOnly, async (req, res) => {
+    try {
+        console.log("🧪 TRIGGERING TEST EMAIL...");
+        await sendEmail({
+            to: req.user.email,
+            subject: "Rasoi SMTP Test",
+            html: "<h1>It Works! 👨‍🍳</h1><p>If you see this, your Render server can successfully reach Gmail.</p>"
+        });
+        res.json({ message: "Test email sent successfully! Check your inbox and Render logs." });
+    } catch (err) {
+        console.error("🧪 TEST EMAIL FAILED:", err);
+        res.status(500).json({ error: err.message, stack: err.stack });
     }
 });
 

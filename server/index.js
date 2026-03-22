@@ -28,6 +28,7 @@ import billingRoutes from "./routes/billing.js";
 import menuRoutes from "./routes/menu.js";
 
 const app = express();
+app.set("trust proxy", 1); // Trust Render's load balancer for rate limiting
 const PORT = process.env.PORT || 3001;
 const isProd = process.env.NODE_ENV === "production";
 
