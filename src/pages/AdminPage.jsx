@@ -8,7 +8,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Building2, Upload, Users, Plus, Shield, AlertCircle, CheckCircle, Trash2 } from "lucide-react";
+import { Building2, Upload, Users, Plus, Shield, AlertCircle, CheckCircle, Trash2, Mail } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import api from "@/lib/api";
