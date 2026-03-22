@@ -52,7 +52,12 @@ export const AuthProvider = ({ children }) => {
   const signIn = async (email, password) => {
     const data = await api.login(email, password);
     setToken(data.token);
-    await loadSession();
+    // Use the data returned directly from login to save a network request
+    setUser(data.user);
+    setProfile(data.profile);
+    setRole(data.role);
+    setHostel(data.hostel);
+    setIsBlocked(data.isBlocked || false);
   };
 
   const signUp = async (body) => {

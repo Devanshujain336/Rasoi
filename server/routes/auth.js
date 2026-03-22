@@ -99,11 +99,12 @@ router.post("/signup", async (req, res) => {
             <p style="margin-top: 20px; color: #666; font-size: 12px;">If you did not request this, please ignore this email.</p>
         `;
 
-        await sendEmail({
+        // Send email in the background to speed up response time
+        sendEmail({
             to: user.email,
             subject: "Verify Your Rasoi Account",
             html: emailHtml
-        });
+        }).catch(err => console.error("📧 BACKGROUND EMAIL ERROR:", err));
 
         res.status(201).json({ message: "Account created successfully. Please check your email to verify your account." });
     } catch (err) {
@@ -133,7 +134,18 @@ router.post("/login", async (req, res) => {
         }
 
         const token = user.generateToken();
-        res.json({ token, userId: user._id, email: user.email });
+
+        // Optimize: Fetch profile, role, and hostel immediately to avoid extra round trips
+        const profile = await Profile.findOne({ user_id: user._id }).populate("hostel_id");
+        
+        res.json({ 
+            token, 
+            user: { _id: user._id, email: user.email },
+            profile,
+            role: profile ? profile.role : "student",
+            hostel: profile ? profile.hostel_id : null,
+            isBlocked: profile ? profile.is_blocked : false
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
