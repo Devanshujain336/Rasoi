@@ -25,6 +25,7 @@ import AuthPage from "./pages/AuthPage";
 import ProfilePage from "./pages/ProfilePage";
 import AdminPage from "./pages/AdminPage";
 import NotFound from "./pages/NotFound";
+import VerifyEmail from "./pages/VerifyEmail";
 const queryClient = new QueryClient();
 const App = () => (<QueryClientProvider client={queryClient}>
   <TooltipProvider>
@@ -36,6 +37,7 @@ const App = () => (<QueryClientProvider client={queryClient}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/menu" element={<MenuPage />} />
           <Route path="/dashboard" element={<Dashboard />} />

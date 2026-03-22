@@ -1,0 +1,48 @@
+import nodemailer from "nodemailer";
+
+/**
+ * sendEmail utility
+ * Sends an email using Nodemailer and Gmail SMTP (or any custom SMTP configured in .env).
+ * 
+ * @param {Object} options
+ * @param {string} options.to - Recipient email address
+ * @param {string} options.subject - Email subject
+ * @param {string} options.text - Plain text content
+ * @param {string} options.html - HTML content
+ */
+const sendEmail = async (options) => {
+    // Return early/mock in development if credentials aren't set
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        console.warn("\n⚠️ EMAIL_USER or EMAIL_PASS not set in .env.");
+        console.warn(`Simulated sending email to: ${options.to}`);
+        console.warn(`Subject: ${options.subject}`);
+        console.warn(`Text: ${options.text}\n`);
+        return;
+    }
+
+    const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+        },
+    });
+
+    const mailOptions = {
+        from: `Rasoi Auth <${process.env.EMAIL_USER}>`,
+        to: options.to,
+        subject: options.subject,
+        text: options.text,
+        html: options.html,
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log(`✉️ Email successfully sent to ${options.to}`);
+    } catch (err) {
+        console.error("❌ Error sending email:", err);
+        throw err;
+    }
+};
+
+export default sendEmail;

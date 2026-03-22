@@ -57,8 +57,7 @@ export const AuthProvider = ({ children }) => {
 
   const signUp = async (body) => {
     const data = await api.signup(body);
-    setToken(data.token);
-    await loadSession();
+    return data;
   };
 
   const signOut = () => {

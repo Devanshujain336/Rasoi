@@ -16,6 +16,8 @@ const userSchema = new mongoose.Schema({
     full_name: { type: String, default: "" },
     roll_number: { type: String, default: "" },
     created_at: { type: Date, default: Date.now },
+    is_verified: { type: Boolean, default: false },
+    verification_token: { type: String },
 });
 
 // Hash password before saving

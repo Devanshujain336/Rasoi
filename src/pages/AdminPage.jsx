@@ -26,6 +26,8 @@ const AdminPage = () => {
   const [importRole, setImportRole] = useState("student");
   const [importing, setImporting] = useState(false);
   const [deleting, setDeleting] = useState(null); // ID of hostel being deleted
+  const [deletingEmail, setDeletingEmail] = useState(null); 
+  const [manualEmail, setManualEmail] = useState("");
   const fileRef = useRef(null);
 
   useEffect(() => {
@@ -139,6 +141,44 @@ const AdminPage = () => {
     if (fileRef.current) fileRef.current.value = "";
   };
 
+  const handleManualAdd = async (e) => {
+    e.preventDefault();
+    if (!manualEmail.trim() || !selectedHostel) return;
+    
+    setImporting(true);
+    setMsg({ type: "", text: "" });
+
+    try {
+      const data = await api.importStudents({ 
+        hostel_id: selectedHostel, 
+        emails: [manualEmail.trim().toLowerCase()], 
+        role: importRole 
+      });
+      setMsg({ type: "success", text: `Successfully added ${manualEmail} as ${importRole}.` });
+      setManualEmail("");
+      fetchHostelEmails(selectedHostel);
+    } catch (err) {
+      setMsg({ type: "error", text: err.message });
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const handleDeleteEmail = async (id, email) => {
+    if (!window.confirm(`Are you sure you want to remove ${email} from the approved list?`)) return;
+    setDeletingEmail(id);
+    try {
+      await api.deleteHostelEmail(id);
+      setMsg({ type: "success", text: `Successfully removed ${email} from the list.` });
+      fetchHostelEmails(selectedHostel);
+    } catch (err) {
+      setMsg({ type: "error", text: err.message });
+      alert("Failed to delete: " + err.message);
+    } finally {
+      setDeletingEmail(null);
+    }
+  };
+
   if (loading) return <div className="min-h-screen pt-20 flex items-center justify-center"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
 
   return (
@@ -223,6 +263,29 @@ const AdminPage = () => {
                     </div>
                   </div>
                   <div>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Manual Entry</label>
+                    <form onSubmit={handleManualAdd} className="flex gap-2 mt-1.5">
+                      <input 
+                        type="email" 
+                        value={manualEmail} 
+                        onChange={(e) => setManualEmail(e.target.value)} 
+                        placeholder="Enter email address"
+                        className="flex-1 px-4 py-2 rounded-xl bg-muted border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      />
+                      <button 
+                        type="submit" 
+                        disabled={importing || !manualEmail.trim()}
+                        className="px-4 py-2 rounded-xl bg-gradient-warm text-primary-foreground font-semibold text-sm disabled:opacity-50"
+                      >
+                        Add
+                      </button>
+                    </form>
+                  </div>
+                  <div className="relative py-2">
+                    <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+                    <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground italic">Or Upload File</span></div>
+                  </div>
+                  <div>
                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Upload CSV / TXT</label>
                     <p className="text-xs text-muted-foreground mb-2">File with one email per line or comma-separated emails</p>
                     <input ref={fileRef} type="file" accept=".csv,.txt" onChange={handleCSVUpload} disabled={importing}
@@ -231,7 +294,7 @@ const AdminPage = () => {
                   {importing && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                      Importing...
+                      Processing...
                     </div>
                   )}
                 </div>
@@ -256,6 +319,7 @@ const AdminPage = () => {
                           <th className="px-6 py-3 font-semibold text-muted-foreground">Email</th>
                           <th className="px-6 py-3 font-semibold text-muted-foreground">Role</th>
                           <th className="px-6 py-3 font-semibold text-muted-foreground text-right">Added</th>
+                          <th className="px-6 py-3 font-semibold text-muted-foreground text-right">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border">
@@ -269,6 +333,20 @@ const AdminPage = () => {
                             </td>
                             <td className="px-6 py-4 text-right text-muted-foreground text-xs">
                               {new Date(a.created_at).toLocaleDateString()}
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <button 
+                                onClick={() => handleDeleteEmail(a._id, a.email)}
+                                disabled={deletingEmail === a._id}
+                                className="p-2 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+                                title="Remove Email"
+                              >
+                                {deletingEmail === a._id ? (
+                                  <div className="w-4 h-4 border-2 border-destructive border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-4 h-4" />
+                                )}
+                              </button>
                             </td>
                           </tr>
                         ))}

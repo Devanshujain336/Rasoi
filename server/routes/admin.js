@@ -168,4 +168,21 @@ router.get("/hostels/:id/emails", protect, adminOnly, async (req, res) => {
     }
 });
 
+// DELETE /api/admin/emails/:id
+router.delete("/emails/:id", protect, adminOnly, async (req, res) => {
+    try {
+        console.log(`🗑️ ADMIN: Deleting allowed email ID: ${req.params.id}`);
+        const deleted = await AllowedEmail.findByIdAndDelete(req.params.id);
+        if (!deleted) {
+            console.log(`❌ Email ID ${req.params.id} not found in database.`);
+            return res.status(404).json({ error: "Email not found." });
+        }
+        console.log(`✅ Email ID ${req.params.id} successfully deleted.`);
+        res.json({ message: "Email removed from approved list." });
+    } catch (err) {
+        console.error("💥 DELETE EMAIL ERROR:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 export default router;

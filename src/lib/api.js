@@ -32,6 +32,7 @@ export const api = {
     signup: (body) => request("/api/auth/signup", { method: "POST", body }),
     login: (email, password) => request("/api/auth/login", { method: "POST", body: { email, password } }),
     me: () => request("/api/auth/me"),
+    verifyEmail: (token) => request("/api/auth/verify-email", { method: "POST", body: { token } }),
 
     // Profile
     getProfile: (userId) => request(`/api/profiles/${userId}`),
@@ -43,6 +44,7 @@ export const api = {
     deleteHostel: (id) => request(`/api/admin/hostels/${id}`, { method: "DELETE" }),
     getHostelEmails: (id) => request(`/api/admin/hostels/${id}/emails`),
     importStudents: (body) => request("/api/admin/import-students", { method: "POST", body }),
+    deleteHostelEmail: (id) => request(`/api/admin/emails/${id}`, { method: "DELETE" }),
 
     // Forum
     getPosts: (params = {}) => {

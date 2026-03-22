@@ -88,8 +88,9 @@ const AuthPage = () => {
     if (form.password.length < 6) return setError("Password must be at least 6 characters.");
     setLoading(true);
     try {
-      await signUp({ email: form.email, password: form.password, full_name: form.fullName, roll_number: form.rollNumber });
-      navigate("/dashboard");
+      const data = await signUp({ email: form.email, password: form.password, full_name: form.fullName, roll_number: form.rollNumber });
+      setSuccess(data.message || "Account created. Please check your email to verify your account.");
+      setMode("verify-sent");
     } catch (err) {
       setError(err.message || "Could not create account.");
     }
@@ -120,22 +121,24 @@ const AuthPage = () => {
 
         {/* Card */}
         <div className="bg-white rounded-[2rem] shadow-elevated border-2 border-border overflow-hidden">
-          {/* Tabs */}
-          <div className="flex border-b border-border">
-            {["login", "signup"].map((m) => (
-              <button
-                key={m}
-                onClick={() => { setMode(m); setError(""); setSuccess(""); setEmailValidated(false); setHostelInfo(null); }}
-                className={`flex-1 py-4 text-sm font-semibold capitalize transition-colors relative ${mode === m ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                  }`}
-              >
-                {m === "login" ? "Sign In" : "Create Account"}
-                {mode === m && (
-                  <motion.div layoutId="auth-tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-warm" />
-                )}
-              </button>
-            ))}
-          </div>
+          {/* Tabs - Hidden in Verify Sent mode */}
+          {mode !== "verify-sent" && (
+            <div className="flex border-b border-border">
+              {["login", "signup"].map((m) => (
+                <button
+                  key={m}
+                  onClick={() => { setMode(m); setError(""); setSuccess(""); setEmailValidated(false); setHostelInfo(null); }}
+                  className={`flex-1 py-4 text-sm font-semibold capitalize transition-colors relative ${mode === m ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                >
+                  {m === "login" ? "Sign In" : "Create Account"}
+                  {mode === m && (
+                    <motion.div layoutId="auth-tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-warm" />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className="p-6">
             <AnimatePresence>
@@ -237,6 +240,29 @@ const AuthPage = () => {
                   ← Back to sign in
                 </button>
               </form>
+            )}
+
+            {/* VERIFY SENT */}
+            {mode === "verify-sent" && (
+              <div className="space-y-6 text-center py-4">
+                <div className="flex justify-center">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Mail className="w-8 h-8 text-primary" />
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-foreground mb-2">Check Your Email</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    We've sent a verification link to <strong className="text-foreground">{form.email}</strong>. 
+                    Please click the link in the email to activate your account.
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <button type="button" onClick={() => { setMode("login"); setSuccess("Now you can login once you've clicked the link!"); }} className="w-full py-3 rounded-xl border border-border bg-white text-foreground font-semibold text-sm hover:bg-muted transition-all">
+                    Return to Log In
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </div>
