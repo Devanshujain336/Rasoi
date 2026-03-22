@@ -1,7 +1,7 @@
 # Environment variables (NEVER commit these)
-.env
-.env.local
-.env.production
+**/.env
+**/.env.local
+**/.env.production
 
 # Logs
 logs
