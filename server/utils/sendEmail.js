@@ -31,11 +31,15 @@ const sendEmail = async (options) => {
         tls: {
             rejectUnauthorized: false
         },
-        // Force IPv4 and use conservative timeouts
+        // The "Nuclear Fix" for Render: Surgical IPv4 lookup
+        // Forces the specific SMTP lookup to ignore IPv6 records
+        family: 4,
+        lookup: (hostname, options, callback) => {
+            require("node:dns").lookup(hostname, { family: 4 }, callback);
+        },
         connectionTimeout: 15000,
         greetingTimeout: 15000,
-        socketTimeout: 30000,
-        family: 4 
+        socketTimeout: 30000
     });
 
     try {
