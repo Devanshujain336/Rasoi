@@ -7,6 +7,7 @@
  */
 
 import { useState, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Plus, User, X, Check, Clock, ShoppingBag, Minus, ShieldAlert } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -71,19 +72,23 @@ const ExtrasPage = () => {
     }
   };
 
+  // Eager pre-fetch all students (caches in IndexedDB for offline access)
+  const { data: allStudents = [] } = useQuery({
+    queryKey: ['students-list'],
+    queryFn: () => api.searchStudents(""),
+    staleTime: Infinity, // never expires during session
+  });
+
   const handleSearchChange = (value) => {
     setRollSearch(value);
-    if (searchTimeout.current) clearTimeout(searchTimeout.current);
-
+    
+    // Instant offline local filter
     if (value.length >= 2) {
-      searchTimeout.current = setTimeout(async () => {
-        try {
-          const res = await api.searchStudents(value);
-          setMatchingStudents(res || []);
-        } catch (err) {
-          console.error(err);
-        }
-      }, 300);
+      const q = value.toLowerCase();
+      const filtered = allStudents.filter(s => 
+        s.name?.toLowerCase().includes(q) || s.roll?.toLowerCase().includes(q)
+      ).slice(0, 10);
+      setMatchingStudents(filtered);
     } else {
       setMatchingStudents([]);
     }
@@ -125,17 +130,27 @@ const ExtrasPage = () => {
         student_id: selectedStudent.id,
         items: selectedItems.map(i => ({ name: i.name, price: i.price, quantity: i.quantity }))
       });
-      fetchRecent();
-      setBilledName(selectedStudent.name);
-      setBilledAmount(totalAmount);
-      setShowSuccess(true);
-      setSelectedStudent(null);
-      setSelectedItems([]);
-      setRollSearch("");
-      setTimeout(() => setShowSuccess(false), 1500);
+      completeBilling();
     } catch (err) {
-      alert(err.message || "Failed to bill items");
+      if (!navigator.onLine || err.message === 'Failed to fetch') {
+        // Offline Workbox Queue Fallback
+        alert("You are offline. ⚡ The extra item bill has been saved and will sync automatically when internet is restored!");
+        completeBilling();
+      } else {
+        alert(err.message || "Failed to bill items");
+      }
     }
+  };
+
+  const completeBilling = () => {
+    fetchRecent();
+    setBilledName(selectedStudent.name);
+    setBilledAmount(totalAmount);
+    setShowSuccess(true);
+    setSelectedStudent(null);
+    setSelectedItems([]);
+    setRollSearch("");
+    setTimeout(() => setShowSuccess(false), 1500);
   };
 
   const handleCancel = () => {

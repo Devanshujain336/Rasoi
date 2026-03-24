@@ -9,7 +9,9 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import Navbar from "./components/Navbar";
@@ -26,8 +28,21 @@ import ProfilePage from "./pages/ProfilePage";
 import AdminPage from "./pages/AdminPage";
 import NotFound from "./pages/NotFound";
 import VerifyEmail from "./pages/VerifyEmail";
-const queryClient = new QueryClient();
-const App = () => (<QueryClientProvider client={queryClient}>
+
+// Setup Persistent Cache for offline usage
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      gcTime: 1000 * 60 * 60 * 24, // Keep query data in garbage collection for 24 hours
+      staleTime: 1000 * 60 * 5, // Data is fresh for 5 mins
+    },
+  },
+});
+const persister = createSyncStoragePersister({
+  storage: window.localStorage,
+});
+
+const App = () => (<PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
   <TooltipProvider>
     <Toaster />
     <Sonner />
@@ -52,5 +67,5 @@ const App = () => (<QueryClientProvider client={queryClient}>
       </AuthProvider>
     </BrowserRouter>
   </TooltipProvider>
-</QueryClientProvider>);
+</PersistQueryClientProvider>);
 export default App;

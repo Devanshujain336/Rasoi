@@ -337,20 +337,20 @@ router.get("/students/search", protect, async (req, res) => {
         }
 
         const { q } = req.query;
-        if (!q) return res.json([]);
 
-        const query = {
-            $or: [
+        const query = {};
+        if (q) {
+            query.$or = [
                 { full_name: { $regex: q, $options: "i" } },
                 { roll_number: { $regex: q, $options: "i" } }
-            ]
-        };
+            ];
+        }
 
         if (profile.role !== "admin") {
             query.hostel_id = profile.hostel_id;
         }
 
-        const students = await Profile.find(query).limit(10);
+        const students = await Profile.find(query).limit(q ? 20 : 1000);
 
         const results = await Promise.all(students.map(async (st) => {
             const startOfMonth = new Date();

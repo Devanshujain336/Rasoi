@@ -7,6 +7,7 @@
 
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
+import { VitePWA } from "vite-plugin-pwa";
 import { fileURLToPath } from "url";
 import path from "path";
 
@@ -22,7 +23,45 @@ export default defineConfig(({ mode }) => ({
             overlay: false,
         },
     },
-    plugins: [react()].filter(Boolean),
+    plugins: [
+        react(),
+        VitePWA({
+            registerType: "autoUpdate",
+            devOptions: {
+                enabled: true // Enable SW in dev for testing
+            },
+            workbox: {
+                globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
+                runtimeCaching: [
+                    {
+                        urlPattern: /\/api\/.*/i,
+                        handler: "NetworkOnly",
+                        method: "POST",
+                        options: {
+                            backgroundSync: {
+                                name: "offline-mutationsQueue",
+                                options: {
+                                    maxRetentionTime: 24 * 60 // Keep in queue for up to 24 hours
+                                }
+                            }
+                        }
+                    },
+                    {
+                        urlPattern: /\/api\/.*/i,
+                        handler: "NetworkFirst",
+                        method: "GET",
+                        options: {
+                            cacheName: "api-cache",
+                            expiration: {
+                                maxEntries: 200,
+                                maxAgeSeconds: 24 * 60 * 60 // Cache for 24 hours
+                            }
+                        }
+                    }
+                ]
+            }
+        })
+    ].filter(Boolean),
     resolve: {
         alias: {
             "@": path.resolve(__dirname, "./src"),
