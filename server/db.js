@@ -15,6 +15,7 @@ const connectDB = async () => {
             serverSelectionTimeoutMS: 5000,
             maxPoolSize: 100, // Handle up to 100 concurrent DB operations
             socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+            family: 4, // Force IPv4 to fix SRV ECONNREFUSED
         });
         console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
     } catch (err) {

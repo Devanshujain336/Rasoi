@@ -12,9 +12,11 @@ import dotenv from "dotenv";
 dotenv.config(); // Reads from root .env
 
 import dns from "node:dns";
+// Use public DNS to resolve MongoDB Atlas SRV records, bypassing ISP blocks
+dns.setServers(["8.8.8.8", "1.1.1.1"]);
 // Force IPv4-first resolution to fix ENETUNREACH errors on Render
 if (typeof dns.setDefaultResultOrder === "function") {
-    dns.setDefaultResultOrder("ipv4first");
+    // dns.setDefaultResultOrder("ipv4first"); // Breaks SRV locally
 }
 
 import express from "express";
