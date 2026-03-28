@@ -34,7 +34,7 @@ export default defineConfig(({ mode }) => ({
                 globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
                 runtimeCaching: [
                     {
-                        urlPattern: /\/api\/.*/i,
+                        urlPattern: /\/api\/billing\/extras/i,
                         handler: "NetworkOnly",
                         method: "POST",
                         options: {
