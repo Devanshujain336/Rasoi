@@ -54,27 +54,21 @@ app.use(compression());
 app.use(morgan(isProd ? "combined" : "dev"));
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
-const allowedOrigins = [
-    process.env.CLIENT_URL,
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:5174",
-    "http://127.0.0.1:5174",
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
-    "http://localhost:8081",
-    "http://127.0.0.1:8081",
-    "http://localhost:8082",
-    "http://127.0.0.1:8082",
-    "http://localhost:5175",
-    "http://127.0.0.1:5175",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:8083",
-].filter(Boolean);
-
 app.use(cors({
-    origin: isProd ? [process.env.CLIENT_URL].filter(Boolean) : allowedOrigins,
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        if (isProd) {
+            if (origin === process.env.CLIENT_URL) return callback(null, true);
+        } else {
+            // In development, allow any local port that Vite might randomly select
+            if (origin.startsWith("http://localhost:") || origin.startsWith("http://127.0.0.1:") || origin.startsWith("http://192.168.")) {
+                return callback(null, true);
+            }
+        }
+        callback(new Error("CORS policy error: Origin not allowed"));
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
