@@ -7,7 +7,7 @@
  */
 
 import { useState, useEffect, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Plus, User, X, Check, Clock, ShoppingBag, Minus, ShieldAlert } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -46,6 +46,7 @@ const categoryBorders = {
 
 const ExtrasPage = () => {
   const { role } = useAuth();
+  const queryClient = useQueryClient();
   const [rollSearch, setRollSearch] = useState("");
   const [matchingStudents, setMatchingStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -61,6 +62,16 @@ const ExtrasPage = () => {
 
   useEffect(() => {
     fetchRecent();
+
+    // Refresh data when coming back online to show synced items
+    const handleOnline = () => {
+      fetchRecent();
+      // Also refetch the students list to get updated extras count
+      queryClient.invalidateQueries({ queryKey: ['students-list'] });
+    };
+
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
   }, []);
 
   const fetchRecent = async () => {
@@ -68,7 +79,10 @@ const ExtrasPage = () => {
       const data = await api.getRecentExtras();
       setRecentTransactions(data || []);
     } catch (err) {
-      console.error(err);
+      // Only log if we are online; if offline, this is expected
+      if (navigator.onLine) {
+        console.error("Failed to fetch recent transactions:", err);
+      }
     }
   };
 
