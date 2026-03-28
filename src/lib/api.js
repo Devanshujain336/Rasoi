@@ -9,14 +9,24 @@ const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 const getToken = () => localStorage.getItem("token");
 
-const request = async (path, options = {}) => {
+import { queueRequest } from "./offlineSync";
+
+export const request = async (path, options = {}) => {
     const token = getToken();
+    const headers = {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options.headers,
+    };
+
+    // If offline and it's a mutation (POST, etc.), queue it instead of failing
+    const isMutation = ["POST", "PUT", "PATCH", "DELETE"].includes(options.method?.toUpperCase());
+    if (!navigator.onLine && isMutation) {
+        return queueRequest(path, { ...options, headers });
+    }
+
     const res = await fetch(`${BASE_URL}${path}`, {
-        headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            ...options.headers,
-        },
+        headers,
         ...options,
         body: options.body ? JSON.stringify(options.body) : undefined,
     });

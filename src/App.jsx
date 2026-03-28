@@ -6,14 +6,16 @@
  * @details Typically contains top-level router definitions, context provider wrappers, and global layout components (Navbar/Toast container).
  */
 
+import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import { request } from "./lib/api";
+import { syncOfflineQueue } from "./lib/offlineSync";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import MenuPage from "./pages/MenuPage";
@@ -42,7 +44,17 @@ const persister = createSyncStoragePersister({
   storage: window.localStorage,
 });
 
-const App = () => (<PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
+const App = () => {
+  useEffect(() => {
+    // Initial sync check
+    syncOfflineQueue(request);
+
+    const handleOnline = () => syncOfflineQueue(request);
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, []);
+
+  return (<PersistQueryClientProvider client={queryClient} persistOptions={{ persister }}>
   <TooltipProvider>
     <Toaster />
     <Sonner />
@@ -68,4 +80,6 @@ const App = () => (<PersistQueryClientProvider client={queryClient} persistOptio
     </BrowserRouter>
   </TooltipProvider>
 </PersistQueryClientProvider>);
+};
+
 export default App;

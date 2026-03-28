@@ -63,15 +63,24 @@ const ExtrasPage = () => {
   useEffect(() => {
     fetchRecent();
 
-    // Refresh data when coming back online to show synced items
-    const handleOnline = () => {
+    // Refresh data when coming back online or when sync completes
+    const handleRefresh = () => {
       fetchRecent();
-      // Also refetch the students list to get updated extras count
       queryClient.invalidateQueries({ queryKey: ['students-list'] });
     };
 
-    window.addEventListener('online', handleOnline);
-    return () => window.removeEventListener('online', handleOnline);
+    const handleSyncComplete = (e) => {
+      handleRefresh();
+      // Optional: alert or toast the user
+      alert(`${e.detail.count} offline items were successfully synced!`);
+    };
+
+    window.addEventListener('online', handleRefresh);
+    window.addEventListener('offline-sync-completed', handleSyncComplete);
+    return () => {
+      window.removeEventListener('online', handleRefresh);
+      window.removeEventListener('offline-sync-completed', handleSyncComplete);
+    };
   }, []);
 
   const fetchRecent = async () => {
@@ -140,19 +149,19 @@ const ExtrasPage = () => {
 
   const handleConfirm = async () => {
     try {
-      await api.billExtras({
+      const res = await api.billExtras({
         student_id: selectedStudent.id,
         items: selectedItems.map(i => ({ name: i.name, price: i.price, quantity: i.quantity }))
       });
+
+      if (res && res.id) {
+        // This means it was queued
+        alert("You are offline. ⚡ The bill has been saved and will sync automatically when you are back online!");
+      }
+
       completeBilling();
     } catch (err) {
-      if (!navigator.onLine || err.message === 'Failed to fetch') {
-        // Offline Workbox Queue Fallback
-        alert("You are offline. ⚡ The extra item bill has been saved and will sync automatically when internet is restored!");
-        completeBilling();
-      } else {
-        alert(err.message || "Failed to bill items");
-      }
+      alert(err.message || "Failed to bill items");
     }
   };
 

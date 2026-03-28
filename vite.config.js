@@ -36,15 +36,7 @@ export default defineConfig(({ mode }) => ({
                     {
                         urlPattern: /\/api\/billing\/extras/i,
                         handler: "NetworkOnly",
-                        method: "POST",
-                        options: {
-                            backgroundSync: {
-                                name: "offline-mutationsQueue",
-                                options: {
-                                    maxRetentionTime: 24 * 60 // Keep in queue for up to 24 hours
-                                }
-                            }
-                        }
+                        method: "POST"
                     },
                     {
                         urlPattern: /\/api\/.*/i,
