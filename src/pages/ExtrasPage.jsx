@@ -6,7 +6,7 @@
  * @details Often contains state management, useEffect hooks for fetching initial data, and renders multiple smaller components.
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Plus, User, X, Check, Clock, ShoppingBag, Minus, ShieldAlert } from "lucide-react";
@@ -60,6 +60,18 @@ const ExtrasPage = () => {
   const [recentTransactions, setRecentTransactions] = useState([]);
   const searchTimeout = useRef(null);
 
+  const fetchRecent = useCallback(async () => {
+    try {
+      const data = await api.getRecentExtras();
+      setRecentTransactions(data || []);
+    } catch (err) {
+      // Only log if we are online; if offline, this is expected
+      if (navigator.onLine) {
+        console.error("Failed to fetch recent transactions:", err);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     fetchRecent();
 
@@ -81,19 +93,7 @@ const ExtrasPage = () => {
       window.removeEventListener('online', handleRefresh);
       window.removeEventListener('offline-sync-completed', handleSyncComplete);
     };
-  }, []);
-
-  const fetchRecent = async () => {
-    try {
-      const data = await api.getRecentExtras();
-      setRecentTransactions(data || []);
-    } catch (err) {
-      // Only log if we are online; if offline, this is expected
-      if (navigator.onLine) {
-        console.error("Failed to fetch recent transactions:", err);
-      }
-    }
-  };
+  }, [fetchRecent, queryClient]);
 
   // Eager pre-fetch all students (caches in IndexedDB for offline access)
   const { data: allStudents = [] } = useQuery({

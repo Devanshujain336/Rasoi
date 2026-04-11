@@ -40,7 +40,7 @@ const AdminPage = () => {
     }
 
     fetchHostels();
-  }, [role, authLoading]);
+  }, [role, authLoading, fetchHostels]);
 
   useEffect(() => {
     if (selectedHostel) {
@@ -48,7 +48,7 @@ const AdminPage = () => {
     } else {
       setAllowedEmails([]);
     }
-  }, [selectedHostel]);
+  }, [selectedHostel, fetchHostelEmails]);
 
   const fetchHostelEmails = useCallback(async (id) => {
     setLoadingEmails(true);
@@ -62,7 +62,7 @@ const AdminPage = () => {
     }
   }, []);
 
-  const fetchHostels = async () => {
+  const fetchHostels = useCallback(async () => {
     setLoading(true);
     try {
       const data = await api.getHostels();
@@ -72,7 +72,7 @@ const AdminPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const addHostel = async (e) => {
     e.preventDefault();
