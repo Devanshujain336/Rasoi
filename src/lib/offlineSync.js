@@ -1,5 +1,6 @@
-import { get, set, del } from 'idb-keyval';
+import { get, set } from 'idb-keyval';
 import { v4 as uuidv4 } from 'uuid';
+import { toast } from 'sonner';
 
 const QUEUE_KEY = 'offline-requests-queue';
 
@@ -40,6 +41,7 @@ export const syncOfflineQueue = async (fetcher) => {
     if (queue.length === 0) return;
 
     console.log(`Attempting to sync ${queue.length} offline requests...`);
+    const toastId = toast.loading(`Syncing ${queue.length} offline requests...`);
 
     const updatedQueue = [...queue];
     const successfullySyncedIds = [];
@@ -63,9 +65,12 @@ export const syncOfflineQueue = async (fetcher) => {
     await set(QUEUE_KEY, finalQueue);
 
     if (successfullySyncedIds.length > 0) {
+        toast.success(`Successfully synced ${successfullySyncedIds.length} requests`, { id: toastId });
         // Dispatch a custom event so the UI can refresh
         window.dispatchEvent(new CustomEvent('offline-sync-completed', { 
             detail: { count: successfullySyncedIds.length } 
         }));
+    } else {
+        toast.error("Failed to sync offline requests", { id: toastId });
     }
 };

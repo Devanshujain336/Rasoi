@@ -60,13 +60,21 @@ app.use(cors({
         if (!origin) return callback(null, true);
         
         if (isProd) {
-            if (origin === process.env.CLIENT_URL) return callback(null, true);
+            const allowedOrigins = [
+                process.env.CLIENT_URL,
+                "https://rasoi-frontend.vercel.app", // Fallback / placeholder
+            ].filter(Boolean);
+
+            if (allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
+                return callback(null, true);
+            }
         } else {
             // In development, allow any local port that Vite might randomly select
             if (origin.startsWith("http://localhost:") || origin.startsWith("http://127.0.0.1:") || origin.startsWith("http://192.168.")) {
                 return callback(null, true);
             }
         }
+        console.warn(`🚨 CORS BLOCKED: Origin ${origin} is not allowed`);
         callback(new Error("CORS policy error: Origin not allowed"));
     },
     credentials: true,

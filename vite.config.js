@@ -30,6 +30,23 @@ export default defineConfig(({ mode }) => ({
             devOptions: {
                 enabled: true // Enable SW in dev for testing
             },
+            manifest: {
+                name: "Rasoi - Mess Management",
+                short_name: "Rasoi",
+                description: "Hostel Mess Management System for Offline Sync",
+                theme_color: "#ffffff",
+                background_color: "#ffffff",
+                display: "standalone",
+                start_url: "/",
+                icons: [
+                    {
+                        src: "/logo.png",
+                        sizes: "512x512",
+                        type: "image/png",
+                        purpose: "any maskable"
+                    }
+                ]
+            },
             workbox: {
                 globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
                 runtimeCaching: [
