@@ -44,14 +44,25 @@ router.post("/signup", async (req, res) => {
         const existing = await User.findOne({ email: normalizedEmail });
         if (existing) return res.status(409).json({ error: "An account with this email already exists." });
 
+        let hostelId = null;
+        let role = "student";
+
+        const allowedEntry = await AllowedEmail.findOne({ email: normalizedEmail });
+        if (allowedEntry) {
+            hostelId = allowedEntry.hostel_id;
+            role = allowedEntry.role;
+        } else {
+            return res.status(403).json({ error: "Email not on approved list. Contact your hostel admin." });
+        }
+
         const user = await User.create({ email: normalizedEmail, password, full_name });
 
         await Profile.create({
             user_id: user._id,
-            hostel_id: null,
+            hostel_id: hostelId,
             full_name: full_name || "",
             roll_number: roll_number || "",
-            role: "student",
+            role: role,
         });
 
         const token = user.generateToken();
