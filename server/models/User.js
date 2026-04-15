@@ -22,12 +22,12 @@ const userSchema = new mongoose.Schema({
 userSchema.pre("save", async function () {
     if (!this.isModified("password")) return;
     const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
+    this.password = await bcrypt.hash(this.password, salt); // hash the password using bcrypt
 });
 
 // Compare entered password with hashed
 userSchema.methods.matchPassword = async function (enteredPassword) {
-    return await bcrypt.compare(enteredPassword, this.password);
+    return await bcrypt.compare(enteredPassword, this.password); // compare the entered password with the hashed password
 };
 
 // Generate JWT

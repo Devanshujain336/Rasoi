@@ -28,7 +28,6 @@ const request = async (path, options = {}) => {
 
 export const api = {
     // Auth
-    validateEmail: (email) => request("/api/auth/validate-email", { method: "POST", body: { email } }),
     signup: (body) => request("/api/auth/signup", { method: "POST", body }),
     login: (email, password) => request("/api/auth/login", { method: "POST", body: { email, password } }),
     me: () => request("/api/auth/me"),

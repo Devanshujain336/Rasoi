@@ -28,24 +28,7 @@ const loginSchema = z.object({
     password: z.string().min(1)
 });
 
-// POST /api/auth/validate-email
-router.post("/validate-email", async (req, res) => {
-    try {
-        const { email } = req.body;
-        if (!email) return res.status(400).json({ allowed: false, error: "Email is required." });
 
-        const found = await AllowedEmail.findOne({ email: email.toLowerCase().trim() }).populate("hostel_id");
-        if (!found) return res.json({ allowed: false, error: "This email is not on the approved list. Contact your hostel admin." });
-
-        return res.json({
-            allowed: true,
-            role: found.role,
-            hostel: { id: found.hostel_id._id, name: found.hostel_id.name, code: found.hostel_id.code },
-        });
-    } catch (err) {
-        res.status(500).json({ allowed: false, error: "Server error." });
-    }
-});
 
 // POST /api/auth/signup
 router.post("/signup", async (req, res) => {
@@ -58,9 +41,6 @@ router.post("/signup", async (req, res) => {
         const { email, password, full_name, roll_number } = validation.data;
         const normalizedEmail = email.toLowerCase().trim();
 
-        const allowedEntry = await AllowedEmail.findOne({ email: normalizedEmail }).populate("hostel_id");
-        if (!allowedEntry) return res.status(403).json({ error: "Email not on approved list." });
-
         const existing = await User.findOne({ email: normalizedEmail });
         if (existing) return res.status(409).json({ error: "An account with this email already exists." });
 
@@ -68,10 +48,10 @@ router.post("/signup", async (req, res) => {
 
         await Profile.create({
             user_id: user._id,
-            hostel_id: allowedEntry.hostel_id._id,
+            hostel_id: null,
             full_name: full_name || "",
             roll_number: roll_number || "",
-            role: allowedEntry.role,
+            role: "student",
         });
 
         const token = user.generateToken();

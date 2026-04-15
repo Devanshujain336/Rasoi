@@ -7,6 +7,7 @@
  */
 
 import express from "express";
+import mongoose from "mongoose";
 import Rebate from "../models/Rebate.js";
 import MealSkip from "../models/MealSkip.js";
 import ExtraPurchase from "../models/ExtraPurchase.js";
@@ -381,7 +382,16 @@ router.post("/extras", protect, async (req, res) => {
         }
 
         const { student_id, items } = req.body;
-        const studentProfile = await Profile.findOne({ user_id: student_id });
+        
+        // Explicitly cast to ObjectId to prevent string-vs-ObjectId type mismatch
+        let studentObjectId;
+        try {
+            studentObjectId = new mongoose.Types.ObjectId(student_id);
+        } catch (e) {
+            return res.status(400).json({ error: "Invalid student_id format." });
+        }
+        
+        const studentProfile = await Profile.findOne({ user_id: studentObjectId });
         if (!studentProfile) return res.status(404).json({ error: "Student not found." });
 
         if (profile.role !== "admin" && studentProfile.hostel_id?.toString() !== profile.hostel_id?.toString()) {
@@ -389,7 +399,7 @@ router.post("/extras", protect, async (req, res) => {
         }
 
         const purchases = items.map(i => ({
-            user_id: student_id,
+            user_id: studentObjectId,
             hostel_id: studentProfile.hostel_id,
             item_name: i.name,
             price: i.price,
@@ -400,6 +410,7 @@ router.post("/extras", protect, async (req, res) => {
         await ExtraPurchase.insertMany(purchases);
         res.status(201).json({ success: true, message: "Billed successfully" });
     } catch (err) {
+        console.error("POST /extras ERROR:", err);
         res.status(400).json({ error: err.message });
     }
 });

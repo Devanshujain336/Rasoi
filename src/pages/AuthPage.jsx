@@ -35,37 +35,12 @@ const AuthPage = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [emailValidated, setEmailValidated] = useState(false);
-  const [hostelInfo, setHostelInfo] = useState(null);
-  const [validatingEmail, setValidatingEmail] = useState(false);
   const navigate = useNavigate();
   const { signIn, signUp } = useAuth();
 
   const [form, setForm] = useState({ email: "", password: "", fullName: "", rollNumber: "", confirmPassword: "" });
   const set = (k) => (e) => {
     setForm((f) => ({ ...f, [k]: e.target.value }));
-    if (k === "email" && mode === "signup") {
-      setEmailValidated(false);
-      setHostelInfo(null);
-    }
-  };
-
-  const validateEmail = async () => {
-    if (!form.email.trim()) return;
-    setValidatingEmail(true);
-    setError("");
-    try {
-      const data = await api.validateEmail(form.email.trim());
-      if (data.allowed) {
-        setEmailValidated(true);
-        setHostelInfo(data.hostel);
-      } else {
-        setError(data.error || "Email not approved.");
-      }
-    } catch (err) {
-      setError(err.message || "Could not validate email. Try again.");
-    }
-    setValidatingEmail(false);
   };
 
   const handleLogin = async (e) => {
@@ -83,7 +58,6 @@ const AuthPage = () => {
   const handleSignup = async (e) => {
     e.preventDefault();
     setError("");
-    if (!emailValidated) return setError("Please validate your email first.");
     if (form.password !== form.confirmPassword) return setError("Passwords do not match.");
     if (form.password.length < 6) return setError("Password must be at least 6 characters.");
     setLoading(true);
@@ -181,47 +155,29 @@ const AuthPage = () => {
             {/* SIGNUP */}
             {mode === "signup" && (
               <form onSubmit={handleSignup} className="space-y-4">
-                <div className="space-y-2">
-                  <InputField icon={Mail} type="email" placeholder="Enter your approved email" value={form.email} onChange={set("email")} />
-                  {!emailValidated && (
-                    <button type="button" onClick={validateEmail} disabled={validatingEmail || !form.email.trim()}
-                      className="w-full py-2.5 rounded-xl bg-muted border border-border text-foreground text-sm font-medium hover:bg-muted/80 transition-all disabled:opacity-50">
-                      {validatingEmail ? "Checking..." : "Verify Email"}
-                    </button>
-                  )}
-                  {emailValidated && hostelInfo && (
-                    <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }}
-                      className="flex items-center gap-2 p-3 rounded-xl bg-secondary/10 border border-secondary/20 text-sm">
-                      <Building2 className="w-4 h-4 text-secondary" />
-                      <span className="text-foreground">Hostel: <strong className="text-secondary">{hostelInfo.name}</strong> ({hostelInfo.code})</span>
-                    </motion.div>
-                  )}
+                <div className="space-y-4">
+                  <InputField icon={Mail} type="email" placeholder="Email address" value={form.email} onChange={set("email")} />
+                  <InputField icon={User} placeholder="Full Name" value={form.fullName} onChange={set("fullName")} />
+                  <input
+                    type="text" placeholder="Roll Number (optional)"
+                    value={form.rollNumber} onChange={set("rollNumber")}
+                    className="w-full px-4 py-3 rounded-xl bg-muted border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                  <InputField
+                    icon={Lock} type={showPassword ? "text" : "password"} placeholder="Password (min 6 chars)"
+                    value={form.password} onChange={set("password")}
+                    right={
+                      <button type="button" onClick={() => setShowPassword(!showPassword)}>
+                        {showPassword ? <EyeOff className="w-4 h-4 text-muted-foreground" /> : <Eye className="w-4 h-4 text-muted-foreground" />}
+                      </button>
+                    }
+                  />
+                  <InputField icon={Lock} type="password" placeholder="Confirm password" value={form.confirmPassword} onChange={set("confirmPassword")} />
+                  <button type="submit" disabled={loading}
+                    className="w-full py-3 rounded-xl bg-gradient-warm text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 shadow-warm hover:shadow-lg hover:scale-[1.01] transition-all disabled:opacity-60">
+                    {loading ? "Creating account..." : <><span>Create Account</span><ArrowRight className="w-4 h-4" /></>}
+                  </button>
                 </div>
-
-                {emailValidated && (
-                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-4">
-                    <InputField icon={User} placeholder="Full Name" value={form.fullName} onChange={set("fullName")} />
-                    <input
-                      type="text" placeholder="Roll Number (optional)"
-                      value={form.rollNumber} onChange={set("rollNumber")}
-                      className="w-full px-4 py-3 rounded-xl bg-muted border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-                    />
-                    <InputField
-                      icon={Lock} type={showPassword ? "text" : "password"} placeholder="Password (min 6 chars)"
-                      value={form.password} onChange={set("password")}
-                      right={
-                        <button type="button" onClick={() => setShowPassword(!showPassword)}>
-                          {showPassword ? <EyeOff className="w-4 h-4 text-muted-foreground" /> : <Eye className="w-4 h-4 text-muted-foreground" />}
-                        </button>
-                      }
-                    />
-                    <InputField icon={Lock} type="password" placeholder="Confirm password" value={form.confirmPassword} onChange={set("confirmPassword")} />
-                    <button type="submit" disabled={loading}
-                      className="w-full py-3 rounded-xl bg-gradient-warm text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 shadow-warm hover:shadow-lg hover:scale-[1.01] transition-all disabled:opacity-60">
-                      {loading ? "Creating account..." : <><span>Create Account</span><ArrowRight className="w-4 h-4" /></>}
-                    </button>
-                  </motion.div>
-                )}
               </form>
             )}
 
