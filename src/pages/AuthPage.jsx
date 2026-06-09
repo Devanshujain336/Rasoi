@@ -130,26 +130,63 @@ const AuthPage = () => {
 
             {/* LOGIN */}
             {mode === "login" && (
-              <form onSubmit={handleLogin} className="space-y-4">
-                <InputField icon={Mail} type="email" placeholder="Email address" value={form.email} onChange={set("email")} />
-                <InputField
-                  icon={Lock} type={showPassword ? "text" : "password"} placeholder="Password"
-                  value={form.password} onChange={set("password")}
-                  right={
-                    <button type="button" onClick={() => setShowPassword(!showPassword)}>
-                      {showPassword ? <EyeOff className="w-4 h-4 text-muted-foreground" /> : <Eye className="w-4 h-4 text-muted-foreground" />}
-                    </button>
-                  }
-                />
-                <div className="text-right">
-                  <button type="button" onClick={() => { setMode("forgot"); setError(""); setSuccess(""); }}
-                    className="text-xs text-primary hover:underline">Forgot password?</button>
+              <div className="space-y-4">
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <InputField icon={Mail} type="email" placeholder="Email address" value={form.email} onChange={set("email")} />
+                  <InputField
+                    icon={Lock} type={showPassword ? "text" : "password"} placeholder="Password"
+                    value={form.password} onChange={set("password")}
+                    right={
+                      <button type="button" onClick={() => setShowPassword(!showPassword)}>
+                        {showPassword ? <EyeOff className="w-4 h-4 text-muted-foreground" /> : <Eye className="w-4 h-4 text-muted-foreground" />}
+                      </button>
+                    }
+                  />
+                  <div className="text-right">
+                    <button type="button" onClick={() => { setMode("forgot"); setError(""); setSuccess(""); }}
+                      className="text-xs text-primary hover:underline">Forgot password?</button>
+                  </div>
+                  <button type="submit" disabled={loading}
+                    className="w-full py-3 rounded-xl bg-gradient-warm text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 shadow-warm hover:shadow-lg hover:scale-[1.01] transition-all disabled:opacity-60">
+                    {loading ? "Signing in..." : <><span>Sign In</span><ArrowRight className="w-4 h-4" /></>}
+                  </button>
+                </form>
+
+                {/* Recruiter Demo Access Section */}
+                <div className="pt-4 border-t border-border/60">
+                  <div className="bg-primary/5 rounded-2xl p-4 border border-primary/10">
+                    <div className="flex items-center gap-2 text-primary font-semibold text-xs mb-1.5">
+                      <Building2 className="w-3.5 h-3.5" />
+                      <span>RECRUITER DEMO ACCESS</span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mb-3 leading-relaxed">
+                      Click below to instantly autofill the credentials for different roles and explore the app.
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setForm(f => ({ ...f, email: "124117009@nitkkr.ac.in", password: "admin123" }));
+                        }}
+                        className="flex-1 py-2 px-3 rounded-xl bg-white border border-border hover:border-primary/40 hover:bg-primary/5 text-foreground font-semibold text-[11px] transition-all flex items-center justify-center gap-1 shadow-sm active:scale-[0.98]"
+                      >
+                        <span>Admin Demo</span>
+                        <ArrowRight className="w-3 h-3 text-primary" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setForm(f => ({ ...f, email: "124102067@nitkkr.ac.in", password: "student123" }));
+                        }}
+                        className="flex-1 py-2 px-3 rounded-xl bg-white border border-border hover:border-primary/40 hover:bg-primary/5 text-foreground font-semibold text-[11px] transition-all flex items-center justify-center gap-1 shadow-sm active:scale-[0.98]"
+                      >
+                        <span>Student Demo</span>
+                        <ArrowRight className="w-3 h-3 text-primary" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <button type="submit" disabled={loading}
-                  className="w-full py-3 rounded-xl bg-gradient-warm text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 shadow-warm hover:shadow-lg hover:scale-[1.01] transition-all disabled:opacity-60">
-                  {loading ? "Signing in..." : <><span>Sign In</span><ArrowRight className="w-4 h-4" /></>}
-                </button>
-              </form>
+              </div>
             )}
 
             {/* SIGNUP */}
@@ -177,6 +214,11 @@ const AuthPage = () => {
                     className="w-full py-3 rounded-xl bg-gradient-warm text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 shadow-warm hover:shadow-lg hover:scale-[1.01] transition-all disabled:opacity-60">
                     {loading ? "Creating account..." : <><span>Create Account</span><ArrowRight className="w-4 h-4" /></>}
                   </button>
+
+                  {/* Recruiter Demo Tip */}
+                  <div className="p-3 rounded-xl bg-primary/5 border border-primary/10 text-[11px] text-muted-foreground text-center">
+                    💡 Looking for demo access? Switch to the <strong>Sign In</strong> tab to use pre-configured Admin/Student demo accounts.
+                  </div>
                 </div>
               </form>
             )}
