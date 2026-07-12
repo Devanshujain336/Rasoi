@@ -6,7 +6,7 @@
  * @details Often contains state management, useEffect hooks for fetching initial data, and renders multiple smaller components.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageSquare, Send, User, Pin, Clock, Plus, X, Lock, Eye, ChevronDown, ChevronRight, Trash2, PinIcon, UnlockIcon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -158,9 +158,7 @@ const PostDetail = ({ postId, onBack }) => {
   const [replyTo, setReplyTo] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { fetchAll(); }, [postId]);
-
-  const fetchAll = async () => {
+  const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
       const data = await api.getPost(postId);
@@ -168,7 +166,9 @@ const PostDetail = ({ postId, onBack }) => {
       setComments(data.comments || []);
     } catch (err) { console.error(err); }
     setLoading(false);
-  };
+  }, [postId]);
+
+  useEffect(() => { fetchAll(); }, [postId, fetchAll]);
 
   const handleAddComment = async (e) => {
     e.preventDefault();
@@ -314,12 +314,7 @@ const ForumPage = () => {
   const [showNewPost, setShowNewPost] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState(null);
 
-  useEffect(() => {
-    if (!user) { navigate("/auth"); return; }
-    fetchPosts();
-  }, [filter, sortBy, user]);
-
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     setLoading(true);
     try {
       const params = {};
@@ -329,7 +324,12 @@ const ForumPage = () => {
       setPosts(data || []);
     } catch (err) { console.error(err); }
     setLoading(false);
-  };
+  }, [filter, sortBy]);
+
+  useEffect(() => {
+    if (!user) { navigate("/auth"); return; }
+    fetchPosts();
+  }, [filter, sortBy, user, fetchPosts, navigate]);
 
   if (selectedPostId) return (
     <div className="min-h-screen pt-20 md:pb-12 pb-[85px] bg-background">

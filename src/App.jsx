@@ -25,30 +25,38 @@ import AuthPage from "./pages/AuthPage";
 import ProfilePage from "./pages/ProfilePage";
 import AdminPage from "./pages/AdminPage";
 import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/ProtectedRoute";
+
 const queryClient = new QueryClient();
-const App = () => (<QueryClientProvider client={queryClient}>
-  <TooltipProvider>
-    <Toaster />
-    <Sonner />
-    <BrowserRouter>
-      <AuthProvider>
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/auth" element={<AuthPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/menu" element={<MenuPage />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/extras" element={<ExtrasPage />} />
-          <Route path="/rebate" element={<RebatePage />} />
-          <Route path="/billing" element={<BillingPage />} />
-          <Route path="/mhmc" element={<MHMCPage />} />
-          <Route path="/forum" element={<ForumPage />} />
-          <Route path="/admin" element={<AdminPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
-  </TooltipProvider>
-</QueryClientProvider>);
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <AuthProvider>
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/auth" element={<AuthPage />} />
+            
+            {/* Protected Routes */}
+            <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+            <Route path="/menu" element={<MenuPage />} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/extras" element={<ProtectedRoute><ExtrasPage /></ProtectedRoute>} />
+            <Route path="/rebate" element={<ProtectedRoute><RebatePage /></ProtectedRoute>} />
+            <Route path="/billing" element={<ProtectedRoute><BillingPage /></ProtectedRoute>} />
+            <Route path="/mhmc" element={<ProtectedRoute><MHMCPage /></ProtectedRoute>} />
+            <Route path="/forum" element={<ProtectedRoute><ForumPage /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
+            
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 export default App;

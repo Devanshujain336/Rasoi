@@ -99,7 +99,7 @@ const AuthPage = () => {
             {["login", "signup"].map((m) => (
               <button
                 key={m}
-                onClick={() => { setMode(m); setError(""); setSuccess(""); setEmailValidated(false); setHostelInfo(null); }}
+                onClick={() => { setMode(m); setError(""); setSuccess(""); }}
                 className={`flex-1 py-4 text-sm font-semibold capitalize transition-colors relative ${mode === m ? "text-primary" : "text-muted-foreground hover:text-foreground"
                   }`}
               >

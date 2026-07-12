@@ -6,7 +6,7 @@
  * @details Might contain some local state relevant to the component but often relies on props passed down from the parent page.
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bell, X, Megaphone, Send } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,7 +37,7 @@ const NotificationBell = () => {
 
   const unreadCount = notifications.filter((n) => !readIds.has(n._id)).length;
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     if (!user || !hostel) return;
     try {
       const { notifications: notifs, readIds: rIds } = await api.getNotifications();
@@ -46,14 +46,14 @@ const NotificationBell = () => {
     } catch {
       // Silently fail on polling errors
     }
-  };
+  }, [user, hostel]);
 
   useEffect(() => {
     if (!user || !hostel) return;
     fetchNotifications();
     pollRef.current = setInterval(fetchNotifications, POLL_INTERVAL_MS);
     return () => clearInterval(pollRef.current);
-  }, [user, hostel]);
+  }, [user, hostel, fetchNotifications]);
 
   const markAsRead = async (notifId) => {
     if (readIds.has(notifId)) return;

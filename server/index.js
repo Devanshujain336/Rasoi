@@ -57,11 +57,25 @@ const allowedOrigins = [
 ].filter(Boolean);
 
 app.use(cors({
-    origin: isProd ? [process.env.CLIENT_URL].filter(Boolean) : allowedOrigins,
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps, curl, or Postman)
+        if (!origin) return callback(null, true);
+        
+        const isAllowed = allowedOrigins.includes(origin) || 
+                          origin.endsWith(".vercel.app") ||
+                          /https:\/\/rasoi-.*-devanshujain336s-projects\.vercel\.app$/.test(origin);
+        
+        if (isAllowed) {
+            callback(null, true);
+        } else {
+            callback(null, false);
+        }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
 }));
+
 
 // ── Body Parser + NoSQL Injection Protection ──────────────────────────────────
 app.use(express.json({ limit: "10kb" }));       // Prevent oversized payloads
